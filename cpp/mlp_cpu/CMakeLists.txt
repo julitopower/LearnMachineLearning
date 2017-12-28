@@ -29,10 +29,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 set(CMAKE_CXX_STANDARD 11)
 
 add_executable(iris_mxnet iris_mxnet.cpp)
-target_link_libraries(iris_mxnet mxnet cuda cudart)
-
-add_executable(reader reader.cpp)
-target_link_libraries(reader mxnet)
+target_link_libraries(iris_mxnet mxnet)
 
 file(COPY
   ${CMAKE_SOURCE_DIR}/iris_train_data.csv
