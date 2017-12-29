@@ -40,3 +40,9 @@ file(COPY
   ${CMAKE_SOURCE_DIR}/iris_test_data.csv
   ${CMAKE_SOURCE_DIR}/iris_test_label.csv
   DESTINATION ${CMAKE_BINARY_DIR})
+
+install(TARGETS mlp_mxnet
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
