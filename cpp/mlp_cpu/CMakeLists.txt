@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8)
 
 project(mlp_mxnet)
 
@@ -8,6 +8,8 @@ set(CMAKE_CXX_FLAGS "-O3")
 
 add_definitions(-DMSHADOW_USE_CBLAS -DMSHADOW_USE_SSE=0 -Wall)
 set(MXNET_ROOT /home/ec2-user/environment/source/incubator-mxnet/ CACHE STRING "mxnet")
+
+message(STATUS ${MXNET_ROOT})
 include_directories(
   /usr/local/cuda-8.0/include
   ${MXNET_ROOT}include
@@ -35,11 +37,11 @@ add_executable(iris_mxnet iris_mxnet.cpp)
 target_link_libraries(iris_mxnet mlp_mxnet)
 
 file(COPY
-  ${CMAKE_SOURCE_DIR}/iris_train_data.csv
-  ${CMAKE_SOURCE_DIR}/iris_train_label.csv
-  ${CMAKE_SOURCE_DIR}/iris_test_data.csv
-  ${CMAKE_SOURCE_DIR}/iris_test_label.csv
-  DESTINATION ${CMAKE_BINARY_DIR})
+  ${CMAKE_CURRENT_SOURCE_DIR}/iris_train_data.csv
+  ${CMAKE_CURRENT_SOURCE_DIR}/iris_train_label.csv
+  ${CMAKE_CURRENT_SOURCE_DIR}/iris_test_data.csv
+  ${CMAKE_CURRENT_SOURCE_DIR}/iris_test_label.csv
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 install(TARGETS mlp_mxnet
   RUNTIME DESTINATION bin
