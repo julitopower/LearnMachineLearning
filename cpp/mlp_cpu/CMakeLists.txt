@@ -1,50 +1,43 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(mlp_mxnet)
+project(iris_mxnet)
 
-set(CMAKE_BUILD_TYPE RelWithDebInfo)
-#set(CMAKE_CXX_FLAGS "-O3 -fsanitize=address")
+# Set submodules path, and look for MxNet
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/Modules/)
+find_package(MxNet REQUIRED)
+
+# Set build type and force O3 manually
+set(CMAKE_BUILD_TYPE RelWiQCthDebInfo)
 set(CMAKE_CXX_FLAGS "-O3")
+set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
-add_definitions(-DMSHADOW_USE_CBLAS -DMSHADOW_USE_SSE=0 -Wall)
-set(MXNET_ROOT /home/ec2-user/environment/source/incubator-mxnet/ CACHE STRING "mxnet")
-
-message(STATUS ${MXNET_ROOT})
+# Setup include and lib paths. A few definitions are needed in order to use
+# MxNet headers.
+add_definitions(-DMSHADOW_USE_CBLAS -DMSHADOW_USE_SSE=0)
 include_directories(
   /usr/local/cuda-8.0/include
-  ${MXNET_ROOT}include
-  ${MXNET_ROOT}dmlc-core/include
-  ${MXNET_ROOT}mshadow
-  ${MXNET_ROOT}nnvm/include
-  ${MXNET_ROOT}dlpack/include
-  ${MXNET_ROOT}cpp-package/include
+  ${MxNet_INCLUDE_DIRS}
   )
 
 link_directories(
-  ${MXNET_ROOT}lib/
   /usr/local/cuda-8.0/lib64/
   /usr/local/lib64
   )
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS on)
-set(CMAKE_CXX_FLAGS "-std=c++11")
-set(CMAKE_CXX_STANDARD 11)
+# The MxNet MLP library
+add_library(mxnet_mlp mlp.cpp)
+target_link_libraries(mxnet_mlp ${MxNet_LIB})
 
-add_library(mlp_mxnet mlp.cpp)
-target_link_libraries(mlp_mxnet mxnet)
+# Second demo executable, only requires MxNet
+add_executable(iris_mxnet_mlp iris_mxnet.cpp)
+target_link_libraries(iris_mxnet_mlp mxnet_mlp)
 
-add_executable(iris_mxnet iris_mxnet.cpp)
-target_link_libraries(iris_mxnet mlp_mxnet)
-
+# Copy files for demo executables to work
 file(COPY
   ${CMAKE_CURRENT_SOURCE_DIR}/iris_train_data.csv
   ${CMAKE_CURRENT_SOURCE_DIR}/iris_train_label.csv
   ${CMAKE_CURRENT_SOURCE_DIR}/iris_test_data.csv
-  ${CMAKE_CURRENT_SOURCE_DIR}/iris_test_label.csv
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-install(TARGETS mlp_mxnet
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-)
+  ${CMAKE_CURRENT_SOURCE_DIR}/iris_test_label.csv  
+  DESTINATION ${CMAKE_BINARY_DIR})
