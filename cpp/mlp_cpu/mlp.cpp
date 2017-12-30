@@ -84,8 +84,8 @@ void Mlp::fit(const std::string& data_train_csv_path,
 
   auto test_iter = mx::MXDataIter("CSVIter");
   if (test) {
-    test_iter.SetParam("data_csv", "./iris_test_data.csv")
-    .SetParam("label_csv", "./iris_test_label.csv")
+    test_iter.SetParam("data_csv", data_test_path)
+    .SetParam("label_csv", labels_test_path)
     .SetParam("data_shape", mx::Shape{params_.dim})
     .SetParam("label_shape", mx::Shape{1})
     .SetParam("batch_size", params_.batch_size)
