@@ -8,7 +8,9 @@
 #include "mlp.hpp"
 
 namespace {
-    namespace mx = mxnet::cpp;
+  namespace mx = mxnet::cpp;
+  const std::string MODEL_FILENAME {"model.json"};
+  const std::string PARAMS_FILENAME {"model-params.json"};  
 }
 
 Mlp::Mlp(const MlpParams& params) : params_{params} {
@@ -146,3 +148,14 @@ void Mlp::fit(const std::string& data_train_csv_path,
 
 void Mlp::predict() {};
 void Mlp::reset() {};
+
+void Mlp::save_model(const std::string &dir) {
+  // First save the model
+  const std::string model_filepath = dir + "/" + MODEL_FILENAME;
+  network_.Save(model_filepath);
+
+  // Now we need to save the parameters
+  const std::string params_filepath = dir + "/" + PARAMS_FILENAME;
+  mx::NDArray::Save(params_filepath, args_);
+  
+}

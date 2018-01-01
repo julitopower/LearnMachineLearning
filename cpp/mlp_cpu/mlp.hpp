@@ -60,6 +60,8 @@ public:
   */
   void predict();
 
+  void save_model(const std::string& dir);
+
   /*
      Not implemented yet
   */
