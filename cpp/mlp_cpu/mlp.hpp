@@ -7,6 +7,14 @@
 #include <mxnet-cpp/MxNetCpp.h>
 
 struct MlpParams {
+  MlpParams() :
+    dim{0},
+    hidden{},
+    batch_size{0},
+    learning_rate{0},
+    weight_decay{0},
+    epochs{0} {};
+  
   MlpParams(std::uint32_t dim, const std::vector<std::size_t>& hidden, std::size_t batch_size = 10,
 	    double learning_rate = 0.01d, double weight_decay = 0.001d, std::size_t epochs = 200) :
     dim{dim},
@@ -47,6 +55,8 @@ class Mlp {
 public:
   Mlp(const MlpParams& params);
 
+  Mlp(const std::string& dir);
+  
   /*
     If test data is provided, after each epoch the accurary in the
     test dataset is printed
@@ -58,7 +68,7 @@ public:
   /*
     Not implemented yet
   */
-  void predict();
+  std::vector<mxnet::cpp::NDArray> predict(const std::string& filepath);
 
   void save_model(const std::string& dir);
 

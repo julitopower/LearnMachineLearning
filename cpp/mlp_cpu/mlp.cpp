@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <map>
 #include <string>
@@ -9,8 +10,19 @@
 
 namespace {
   namespace mx = mxnet::cpp;
+  namespace ch = std::chrono;
   const std::string MODEL_FILENAME {"model.json"};
-  const std::string PARAMS_FILENAME {"model-params.json"};  
+  const std::string PARAMS_FILENAME {"model-params.json"};
+
+
+  static void readall (const std::string& path, std::string *content) {
+    std::ifstream ifs(path, std::ios::in | std::ios::binary);
+    ifs.seekg(0, std::ios::end);
+    size_t length = ifs.tellg();
+    content->resize(length);
+    ifs.seekg(0, std::ios::beg);
+    ifs.read(&content->at(0), content->size()); 
+  }				         
 }
 
 Mlp::Mlp(const MlpParams& params) : params_{params} {
@@ -66,6 +78,21 @@ Mlp::Mlp(const MlpParams& params) : params_{params} {
   exec_ = network_.SimpleBind(ctx, args_);
 }
 
+Mlp::Mlp(const std::string& dir) {
+  // // Load the params
+  const std::string params_filepath = dir + "/" + PARAMS_FILENAME;
+  args_ = mx::NDArray::LoadToMap(params_filepath);
+
+  // // Load the network
+  const std::string model_filepath = dir + "/" + MODEL_FILENAME;
+  network_ = mx::Symbol::Load(model_filepath);
+
+  // Initialize the executor
+  // Create executor by binding parameters to the model
+  auto ctx = mx::Context::cpu();  
+  exec_ = network_.SimpleBind(ctx, args_);
+}
+
 void Mlp::fit(const std::string& data_train_csv_path,
 	      const std::string& labels_train_csv_path,
 	      const std::string& data_test_path,
@@ -96,11 +123,11 @@ void Mlp::fit(const std::string& data_train_csv_path,
 
   // There is a bug in MxNet prefetcher, sleeping
   // for a little while seems to avoid it
-  std::this_thread::sleep_for(std::chrono::milliseconds{100});
+  std::this_thread::sleep_for(ch::milliseconds{100});
 
   const auto arg_names = network_.ListArguments();
   auto epochs = params_.epochs;
-  auto tic = std::chrono::system_clock::now();
+  auto tic = ch::system_clock::now();
   while (epochs > 0) {
     train_iter.Reset();
 
@@ -138,15 +165,61 @@ void Mlp::fit(const std::string& data_train_csv_path,
     }
 
     std::cout << "Epoch: " << epochs << " " << acc.Get() << std::endl;;
-
   }
 
-  auto toc = std::chrono::system_clock::now();
-  std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count()
+  auto toc = ch::system_clock::now();
+  std::cout << ch::duration_cast<ch::milliseconds>(toc - tic).count()
 	    << std::endl;
 };
 
-void Mlp::predict() {};
+std::vector<mx::NDArray> Mlp::predict(const std::string& filepath) {
+  // Record start time for reporting purposes
+  const auto tic = ch::system_clock::now();
+  
+  // Infer feature dim from the arguments
+  const std::uint32_t feature_dim = args_["data"].GetShape()[1];
+
+  // Let's load the data. By not defining labels, we are telling MxNet
+  // there are no labels
+  const mx_uint batch = 16;
+  auto train_iter = mx::MXDataIter("CSVIter")
+    .SetParam("data_csv", filepath)
+    .SetParam("data_shape", mx::Shape{feature_dim})
+    .SetParam("batch_size", batch)
+    .CreateDataIter();
+  train_iter.Reset();
+
+  // Iterate through the batches
+  std::vector<mx::NDArray> results;
+  const auto ctx = mx::Context::cpu();  
+  while (train_iter.Next()) {
+    // Get batch
+    const auto& data_batch = train_iter.GetDataBatch();
+    
+    // Set data and label
+    data_batch.data.CopyTo(&args_["data"]);
+    data_batch.label.CopyTo(&args_["labels"]);
+    args_["data"].WaitAll();
+    args_["labels"].WaitAll();
+
+    // Compute gradients
+    exec_->Forward(true);
+
+    // Gather results
+    mx::NDArray res{mx::Shape{exec_->outputs[0].GetShape()}, ctx};
+    exec_->outputs[0].CopyTo(&res);
+    res.WaitAll();
+    results.push_back(res);
+    
+  }
+
+  // Report latency and return
+  const auto toc = ch::system_clock::now();  
+  std::cout << ch::duration_cast<ch::milliseconds>(toc - tic).count()
+	    << std::endl;  
+  return results;
+}
+
 void Mlp::reset() {};
 
 void Mlp::save_model(const std::string &dir) {
@@ -157,5 +230,4 @@ void Mlp::save_model(const std::string &dir) {
   // Now we need to save the parameters
   const std::string params_filepath = dir + "/" + PARAMS_FILENAME;
   mx::NDArray::Save(params_filepath, args_);
-  
 }
