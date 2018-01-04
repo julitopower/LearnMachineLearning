@@ -54,7 +54,10 @@ int main(int argc, char**argv)
 
   mlp.save_model("/tmp/");
   Mlp mlp2{"/tmp"};
-  mlp2.predict("./iris_train_data.csv");
+  auto result = mlp2.predict("./iris_train_data.csv");
+  for(const auto& r : result) {
+    std::cout << r << std::endl;
+  }
   
   return 0;
 }

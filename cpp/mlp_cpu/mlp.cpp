@@ -10,6 +10,7 @@
 
 namespace {
   namespace mx = mxnet::cpp;
+  namespace ch = std::chrono;
   const std::string MODEL_FILENAME {"model.json"};
   const std::string PARAMS_FILENAME {"model-params.json"};
 
@@ -84,7 +85,7 @@ Mlp::Mlp(const std::string& dir) {
 
   // // Load the network
   const std::string model_filepath = dir + "/" + MODEL_FILENAME;
-  network_ = mxnet::cpp::Symbol::Load(model_filepath);
+  network_ = mx::Symbol::Load(model_filepath);
 
   // Initialize the executor
   // Create executor by binding parameters to the model
@@ -122,11 +123,11 @@ void Mlp::fit(const std::string& data_train_csv_path,
 
   // There is a bug in MxNet prefetcher, sleeping
   // for a little while seems to avoid it
-  std::this_thread::sleep_for(std::chrono::milliseconds{100});
+  std::this_thread::sleep_for(ch::milliseconds{100});
 
   const auto arg_names = network_.ListArguments();
   auto epochs = params_.epochs;
-  auto tic = std::chrono::system_clock::now();
+  auto tic = ch::system_clock::now();
   while (epochs > 0) {
     train_iter.Reset();
 
@@ -164,53 +165,59 @@ void Mlp::fit(const std::string& data_train_csv_path,
     }
 
     std::cout << "Epoch: " << epochs << " " << acc.Get() << std::endl;;
-
   }
 
-  auto toc = std::chrono::system_clock::now();
-  std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count()
+  auto toc = ch::system_clock::now();
+  std::cout << ch::duration_cast<ch::milliseconds>(toc - tic).count()
 	    << std::endl;
 };
 
-// TODO: Remove hardcoded constants so that it works with any MLP
-void Mlp::predict(const std::string& filepath) {
-  std::uint32_t feature_dim = args_["data"].GetShape()[1];
-  std::cout << "Inferred feature_dim is: " << feature_dim << std::endl;
+std::vector<mx::NDArray> Mlp::predict(const std::string& filepath) {
+  // Record start time for reporting purposes
+  const auto tic = ch::system_clock::now();
+  
+  // Infer feature dim from the arguments
+  const std::uint32_t feature_dim = args_["data"].GetShape()[1];
 
-  // Let's load the data. By not defining labels, we are telling MxNet there are no
-  // labels
+  // Let's load the data. By not defining labels, we are telling MxNet
+  // there are no labels
+  const mx_uint batch = 16;
   auto train_iter = mx::MXDataIter("CSVIter")
     .SetParam("data_csv", filepath)
     .SetParam("data_shape", mx::Shape{feature_dim})
-    .SetParam("batch_size", 5)
+    .SetParam("batch_size", batch)
     .CreateDataIter();
-
-  auto tic = std::chrono::system_clock::now();
   train_iter.Reset();
 
+  // Iterate through the batches
+  std::vector<mx::NDArray> results;
+  const auto ctx = mx::Context::cpu();  
   while (train_iter.Next()) {
-    auto data_batch = train_iter.GetDataBatch();
+    // Get batch
+    const auto& data_batch = train_iter.GetDataBatch();
+    
     // Set data and label
     data_batch.data.CopyTo(&args_["data"]);
     data_batch.label.CopyTo(&args_["labels"]);
     args_["data"].WaitAll();
     args_["labels"].WaitAll();
+
     // Compute gradients
     exec_->Forward(true);
 
-    auto res = exec_->outputs[0];
-    res.Reshape({5, res.Size()/5});
-    std::cout << res << std::endl;
-
-    // Remove, and fill a results NDArray instead
-    for (auto i = 0U ; i < 5 ; ++i) {
-      std::cout << "elem: " << std::distance(res.GetData() + (i * 3), std::max_element(res.GetData() + (i * 3), res.GetData() + (i + 1) * 3)) << std::endl;;
-    }
+    // Gather results
+    mx::NDArray res{mx::Shape{exec_->outputs[0].GetShape()}, ctx};
+    exec_->outputs[0].CopyTo(&res);
+    res.WaitAll();
+    results.push_back(res);
     
-    auto toc = std::chrono::system_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count()
-	      << std::endl;
   }
+
+  // Report latency and return
+  const auto toc = ch::system_clock::now();  
+  std::cout << ch::duration_cast<ch::milliseconds>(toc - tic).count()
+	    << std::endl;  
+  return results;
 }
 
 void Mlp::reset() {};

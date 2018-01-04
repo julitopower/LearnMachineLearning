@@ -68,7 +68,7 @@ public:
   /*
     Not implemented yet
   */
-  void predict(const std::string& filepath);
+  std::vector<mxnet::cpp::NDArray> predict(const std::string& filepath);
 
   void save_model(const std::string& dir);
 
