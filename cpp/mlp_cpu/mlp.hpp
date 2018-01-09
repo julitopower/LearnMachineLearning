@@ -53,8 +53,14 @@ struct MlpParams {
 */
 class Mlp {
 public:
+  /*
+    Constructor to be used for training purposes
+   */
   Mlp(const MlpParams& params);
 
+  /*
+    Constructor to be used for inference purposes
+  */
   Mlp(const std::string& dir);
   
   /*
@@ -65,11 +71,14 @@ public:
 	   const std::string& labels_csv_path,
 	   const std::string& data_test_path = "",
 	   const std::string& labels_test_path = "");
-  /*
-    Not implemented yet
-  */
+
   std::vector<mxnet::cpp::NDArray> predict(const std::string& filepath);
 
+  /*
+    Saves the network and the parameters to 2 files in the
+    directory indicated as argument. It currently uses MxNet 
+    serialization utilities.
+  */
   void save_model(const std::string& dir);
 
   /*
