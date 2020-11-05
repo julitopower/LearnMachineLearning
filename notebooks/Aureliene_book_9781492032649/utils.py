@@ -17,7 +17,10 @@ def draw_history(history):
     plt.gca().set_ylim(0, 1)
     plt.show()
 
-    
+   
+def print_history(history):
+    draw_history(history)
+ 
 def draw_histories(histories, names):
     fig = plt.figure(figsize=(20, 10))
     legend = []

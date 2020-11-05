@@ -1,0 +1,115 @@
+\documentclass[]{scrartcl}
+
+% \documentclass[10pt]{scrartcl}
+
+\renewcommand*\familydefault{\sfdefault}
+\setkomafont{sectioning}{\bfseries}
+
+\usepackage{framed}
+\usepackage{xcolor}
+\let\oldquote=\quote
+\let\endoldquote=\endquote
+\colorlet{shadecolor}{orange!15}
+\renewenvironment{quote}{\begin{shaded*}\begin{oldquote}}{\end{oldquote}\end{shaded*}}
+
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{listings}
+\usepackage[]{palatino}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+\ifxetex
+\usepackage{mathspec}
+\else
+\usepackage{fontspec}
+\fi
+\defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[top=1cm, bottom=1cm, left=1cm, right=1cm]{geometry}
+\usepackage[unicode=true]{hyperref}
+\PassOptionsToPackage{usenames,dvipsnames}{color} % color is loaded by hyperref
+\hypersetup{
+colorlinks=true,
+linkcolor=cyan,
+citecolor=Blue,
+urlcolor=cyan,
+breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx,grffile}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+\date{}
+
+\begin{document}
+
+{
+\hypersetup{linkcolor=black}
+\setcounter{tocdepth}{3}
+\tableofcontents
+}
+\section{ML Refresher example
+notebooks}\label{ml-refresher-example-notebooks}
+
+These notebooks are inspired by the content of the fantastic book
+``\href{https://www.amazon.com/Hands-Machine-Learning-Scikit-Learn-TensorFlow/dp/1492032646/ref=sr_1_3?crid=3SRL70QAD46FM}{Hands-On
+Machine Learning with Scikit-Learn, Keras, and TensorFlow: Concepts,
+Tools, and Techniques to Build Intelligent Systems 2nd Edition}'' by
+\href{https://twitter.com/aureliengeron}{Aurélien Geron}. This book is a
+goldmine that you should buy.
+
+\section{Environment setup}\label{environment-setup}
+
+We provide a conda environment configuration that defines all the
+dependenies needed to run these example notebooks. To create a new conda
+environment simply type:
+
+\begin{verbatim}
+conda env create -f=environment.yml 
+\end{verbatim}
+
+\subsection{Installing coda}\label{installing-coda}
+
+\begin{verbatim}
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O ~/miniconda.sh
+bash ~/miniconda.sh -b -p $HOME/miniconda
+\end{verbatim}
+
+Verify the installation by executing
+
+\begin{verbatim}
+conda env list
+\end{verbatim}
+
+\end{document}
