@@ -2,7 +2,6 @@ name: juliod_test_tf
 channels:
   - conda-forge
   - defaults
-prefix: /Volumes/HDD_juliod/miniconda/envs/juliod_test
 dependencies:
   - python==3.8
   - pip
