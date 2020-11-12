@@ -27,14 +27,30 @@ def vgg():
     output = keras.layers.Dense(10)(avg)
     return keras.models.Model(inputs=[input_1], outputs=[output])
 
+# Load the data
 (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
 
+# Get the model architecture
 model = vgg()
 model.summary()
+
+# Compile model: Optimizer + loss
 model.compile(optimizer='adam',
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy'])
 
+# Define callbacks, in this case model checkpointing and early stopping
+model_checkpoint_cp = keras.callbacks.ModelCheckpoint(
+    filepath='./.checkpoints/cifar10-{epoch:02d}.hd5', 
+    save_best_only=True
+)
+
+early_cb = keras.callbacks.EarlyStopping(
+    patience=3,
+    monitor='val_accuracy',
+    restore_best_weights=True
+)
 model.fit(X_train, y_train, epochs=20, batch_size=32,
-          validation_data=(X_test, y_test))
+          validation_data=(X_test, y_test),
+          callbacks=[model_checkpoint_cp, early_cb])
 
