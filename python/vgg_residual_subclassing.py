@@ -4,8 +4,14 @@ import numpy as np
 import tensorflow.keras as keras
 import tensorflow as tf
 
+
 class ConvBlock(keras.layers.Layer):
+    """A Layer using Conv2d, BatchNorm, and RElu"""
     def __init__(self, units):
+        """Builds the layer
+
+        :param units: Int. Number of filters in the Conv2D layers
+        """
         def conv_block():
             return [
                 keras.layers.Conv2D(units, (3, 3), padding='same'),
@@ -20,10 +26,12 @@ class ConvBlock(keras.layers.Layer):
         self.units.append(keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'))
 
     def call(self, inputs):
+        """Forward pass on the layer"""
         Z = inputs
         for layer in self.units:
             Z = layer(Z)
         return Z
+
 
 class VGG(keras.Model):
     def __init__(self):
