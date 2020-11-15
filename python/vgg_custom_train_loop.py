@@ -96,7 +96,7 @@ def train_fn(X, y):
 
     # Forward pass + loss calculation, with autodiff enabled
     with tf.GradientTape() as tape:
-        logits = model(X)
+        logits = model(X, training=True)
         loss = loss_fn(y, logits)
     step_mean_loss = tf.reduce_mean(loss)
 
