@@ -1,0 +1,20 @@
+name: tf
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python==3.8
+  - pip
+  - pip:
+    - tensorflow
+    - sklearn
+    - matplotlib
+    - seaborn
+  - emacs
+  - numpy
+  - pandas
+  - pytorch
+  - make
+  - cmake=3.18
+  - notebook
+  - python-language-server
