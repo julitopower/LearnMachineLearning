@@ -108,16 +108,35 @@ def train_fn(X, y):
 
 @tf.function
 def test_fn(X_val, y_val):
+    """Evaluate model on the validation dataset."""
+
     logits = model(X_val)
     loss = tf.reduce_mean(loss_fn(y_val, logits))
     val_loss.update_state(loss)
     val_acc.update_state(y_val, logits)
+
+
+class EarlyStopper(object):
+    def __init__(self, patience):
+        self.patience = patience
+        self.best_metric = np.NINF
+        self.epochs_not_improving = 0
+
+    def should_stop(self, metric):
+        if metric > self.best_metric:
+            self.best_metric = metric
+            self.epochs_not_improving = 0
+        else:
+            self.epochs_not_improving += 1
+        return self.epochs_not_improving == self.patience
+
 
 ################################################################################
 # 
 # Actual training loop start here
 #
 ################################################################################
+early_stopper = EarlyStopper(patience=3)
 for epoch in range(epochs):
     for step, (X, y) in enumerate(train_dataset.as_numpy_iterator()):
         train_fn(X, y)
@@ -135,6 +154,11 @@ for epoch in range(epochs):
     # Epoch reporting
     print(f'\nEpoch {epoch}: train_loss {mean_loss.result():.4f} - train_acc {train_acc.result():.4f} - ', end='', flush=True)
     print(f'val_loss {val_loss.result():.4f} - val_acc {val_acc.result():.4f} - ', flush=True)
+    
+    if early_stopper.should_stop(val_acc.result()):
+        print(f'Stopping early. Best model accuracy on validation dataset is {early_stopper.best_metric}')
+        break
+
     # Metrics cleanup in preparation for the next epoch
     mean_loss.reset_states()
     train_acc.reset_states()
