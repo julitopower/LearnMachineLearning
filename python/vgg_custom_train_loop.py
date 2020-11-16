@@ -136,7 +136,7 @@ class EarlyStopper(object):
 # Actual training loop start here
 #
 ################################################################################
-early_stopper = EarlyStopper(patience=3)
+early_stopper = EarlyStopper(patience=5)
 for epoch in range(epochs):
     for step, (X, y) in enumerate(train_dataset.as_numpy_iterator()):
         train_fn(X, y)
