@@ -3,13 +3,15 @@ import pickle as pk
 import numpy as np
 import tensorflow.keras as keras
 import tensorflow as tf
+from basednn import DNNLayer, DNNModel, EarlyStopper
+
 
 ################################################################################
 #
 # Functions to define model architecture
 #
 ################################################################################
-class ConvBlock(keras.layers.Layer):
+class ConvBlock(DNNLayer):
     """A Layer using Conv2d, BatchNorm, and RElu"""
     def __init__(self, units):
         """Builds the layer
@@ -17,44 +19,29 @@ class ConvBlock(keras.layers.Layer):
         :param units: Int. Number of filters in the Conv2D layers
         """
         def conv_block():
-            return [
-                keras.layers.Conv2D(units, (3, 3), padding='same'),
-                keras.layers.BatchNormalization(),
-                keras.layers.Activation('relu')
-            ]
+            (self +
+             keras.layers.Conv2D(units, (3, 3), padding='same') +
+             keras.layers.BatchNormalization() +
+             keras.layers.Activation('relu'))
+
         super().__init__()
-        self.units = []
-        self.units.extend(conv_block())
-        self.units.extend(conv_block())
-        self.units.extend(conv_block())
-        self.units.append(keras.layers.MaxPooling2D((2, 2), 
-                          strides=(2, 2), 
-                          padding='same'))
-
-    def call(self, inputs):
-        """Forward pass on the layer"""
-        Z = inputs
-        for layer in self.units:
-            Z = layer(Z)
-        return Z
+        (self + conv_block() +
+        conv_block() +
+        conv_block() +
+        keras.layers.MaxPooling2D((2, 2), 
+                                  strides=(2, 2), 
+                                  padding='same'))
 
 
-class VGG(keras.Model):
+class VGG(DNNModel):
     def __init__(self):
         super().__init__()
-        self.units = []
-        self.units.append(ConvBlock(64))
-        self.units.append(ConvBlock(128))
-        self.units.append(ConvBlock(256))
-        self.units.append(keras.layers.GlobalAveragePooling2D())
-        self.units.append(keras.layers.Dense(10))
-
-    def call(self, inputs):
-        Z = inputs
-        for layer in self.units:
-            Z = layer(Z)
-        return Z
-
+        (self + 
+        ConvBlock(64) +
+        ConvBlock(128) +
+        ConvBlock(256) +
+        keras.layers.GlobalAveragePooling2D() +
+        keras.layers.Dense(10))
 
 ################################################################################
 # 
@@ -64,8 +51,8 @@ class VGG(keras.Model):
 
 # Load the data
 (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
-X_train = tf.cast(X_train, tf.float32)
-X_test = tf.cast(X_test, tf.float32)
+X_train = tf.cast(X_train, tf.float32) / 255.0
+X_test = tf.cast(X_test, tf.float32) / 255.0
 
 batch_size = 32
 train_dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train))
@@ -77,7 +64,7 @@ test_dataset = test_dataset.batch(batch_size=batch_size)
 # Get the model architecture
 model = VGG()
 
-epochs = 20 
+epochs = 1000 
 
 loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 optimizer = tf.keras.optimizers.Adam()
@@ -116,27 +103,12 @@ def test_fn(X_val, y_val):
     val_acc.update_state(y_val, logits)
 
 
-class EarlyStopper(object):
-    def __init__(self, patience):
-        self.patience = patience
-        self.best_metric = np.NINF
-        self.epochs_not_improving = 0
-
-    def should_stop(self, metric):
-        if metric > self.best_metric:
-            self.best_metric = metric
-            self.epochs_not_improving = 0
-        else:
-            self.epochs_not_improving += 1
-        return self.epochs_not_improving == self.patience
-
-
 ################################################################################
 # 
 # Actual training loop start here
 #
 ################################################################################
-early_stopper = EarlyStopper(patience=5)
+early_stopper = EarlyStopper(patience=10)
 for epoch in range(epochs):
     for step, (X, y) in enumerate(train_dataset.as_numpy_iterator()):
         train_fn(X, y)
