@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""
+See https://github.com/meng1994412/GoogLeNet_from_scratch for a great explanation of the
+GoogleNet lite architecture.
+"""
 import pickle as pk
 import numpy as np
 import tensorflow.keras as keras
