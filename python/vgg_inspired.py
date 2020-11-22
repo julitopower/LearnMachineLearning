@@ -5,28 +5,32 @@ import tensorflow.keras as keras
 import tensorflow as tf
 
 def vgg():
+    ac = 'selu'
+    ini = 'lecun_normal'
     return keras.models.Sequential([
         keras.layers.Input(shape=(32, 32, 3)),
-        keras.layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
-        keras.layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
+        keras.layers.Conv2D(64, (3, 3), activation=ac, padding='same'),
+        keras.layers.Conv2D(64, (3, 3), activation=ac, padding='same'),
         keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'),
         
-        keras.layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
-        keras.layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
+        keras.layers.Conv2D(128, (3, 3), activation=ac, padding='same'),
+        keras.layers.Conv2D(128, (3, 3), activation=ac, padding='same'),
         keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'),
         
-        keras.layers.Conv2D(256, (3, 3), activation='relu', padding='same'),
-        keras.layers.Conv2D(256, (3, 3), activation='relu', padding='same'),
+        keras.layers.Conv2D(256, (3, 3), activation=ac, padding='same'),
+        keras.layers.Conv2D(256, (3, 3), activation=ac, padding='same'),
         keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'),
 
         keras.layers.Flatten(),
-        keras.layers.Dense(256, activation='relu'),
-        keras.layers.Dense(256, activation='relu'),
+        keras.layers.Dense(256, activation=ac),
+        keras.layers.Dense(256, activation=ac),
         keras.layers.Dense(10)
     ])   
 
 (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
 
+X_train = X_train / 255.0
+X_test = X_test / 255.0
 model = vgg()
 model.summary()
 
@@ -47,8 +51,8 @@ model.compile(optimizer='adam',
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy'])
 
-# 74% accuracy on test dataset after 7 epochs. After 70+ epochs weights get corrupt
-# and accuracy remains at 10% from that epoch onwards
+# 0.7782 on test dataset after 11 epochs. I didn't let it run long enough to verify
+# statiliby
 model.fit(X_train, y_train, epochs=1000, batch_size=32,
           validation_data=(X_test, y_test), callbacks=[early_cb, model_checkpoint_cp])
 
