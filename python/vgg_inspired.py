@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import pickle as pk
 import numpy as np
 import tensorflow.keras as keras
@@ -28,10 +29,26 @@ def vgg():
 
 model = vgg()
 model.summary()
+
+
+# Define callbacks, in this case model checkpointing and early stopping
+model_checkpoint_cp = keras.callbacks.ModelCheckpoint(
+    filepath='./.checkpoints/cifar10-{epoch:02d}.hd5', 
+    save_best_only=True
+)
+
+early_cb = keras.callbacks.EarlyStopping(
+    patience=100,
+    monitor='val_accuracy',
+    restore_best_weights=True
+)
+
 model.compile(optimizer='adam',
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy'])
 
-model.fit(X_train, y_train, epochs=10, batch_size=200,
-          validation_data=(X_test, y_test))
+# 74% accuracy on test dataset after 7 epochs. After 70+ epochs weights get corrupt
+# and accuracy remains at 10% from that epoch onwards
+model.fit(X_train, y_train, epochs=1000, batch_size=32,
+          validation_data=(X_test, y_test), callbacks=[early_cb, model_checkpoint_cp])
 
