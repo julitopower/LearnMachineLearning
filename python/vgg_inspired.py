@@ -5,20 +5,26 @@ import tensorflow.keras as keras
 import tensorflow as tf
 
 def vgg():
-    ac = 'selu'
-    ini = 'lecun_normal'
+
+    ac = 'relu'
+    ini = 'he_uniform'
+    def conv(units, shape):
+        return keras.layers.Conv2D(units, shape, 
+                activation=ac, 
+                kernel_initializer=ini,
+                padding='same')
     return keras.models.Sequential([
         keras.layers.Input(shape=(32, 32, 3)),
-        keras.layers.Conv2D(64, (3, 3), activation=ac, padding='same'),
-        keras.layers.Conv2D(64, (3, 3), activation=ac, padding='same'),
+        conv(64, (3, 3)),
+        conv(64, (3, 3)),
         keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'),
         
-        keras.layers.Conv2D(128, (3, 3), activation=ac, padding='same'),
-        keras.layers.Conv2D(128, (3, 3), activation=ac, padding='same'),
+        conv(128, (3, 3)),
+        conv(128, (3, 3)),
         keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'),
         
-        keras.layers.Conv2D(256, (3, 3), activation=ac, padding='same'),
-        keras.layers.Conv2D(256, (3, 3), activation=ac, padding='same'),
+        conv(256, (3, 3)),
+        conv(256, (3, 3)),
         keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'),
 
         keras.layers.Flatten(),
@@ -51,7 +57,7 @@ model.compile(optimizer='adam',
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy'])
 
-# 0.7782 on test dataset after 11 epochs. I didn't let it run long enough to verify
+# 0.78 on test dataset after 11 epochs. I didn't let it run long enough to verify
 # statiliby
 model.fit(X_train, y_train, epochs=1000, batch_size=32,
           validation_data=(X_test, y_test), callbacks=[early_cb, model_checkpoint_cp])
