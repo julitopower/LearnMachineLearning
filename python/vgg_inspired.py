@@ -15,6 +15,7 @@ def vgg():
                 padding='same')
     return keras.models.Sequential([
         keras.layers.Input(shape=(32, 32, 3)),
+        keras.layers.BatchNormalization(),
         conv(64, (3, 3)),
         conv(64, (3, 3)),
         keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'),
@@ -58,8 +59,7 @@ model.compile(optimizer=opt,
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy'])
 
-# 0.79 on test dataset after 11 epochs. I didn't let it run long enough to verify
-# statiliby
-model.fit(X_train, y_train, epochs=1000, batch_size=32,
+# 0.801 on test dataset after 32 epochs. Stable over more than 100 epochs
+model.fit(X_train, y_train, epochs=1000, batch_size=100,
           validation_data=(X_test, y_test), callbacks=[early_cb, model_checkpoint_cp])
 
