@@ -6,8 +6,8 @@ import tensorflow as tf
 
 def vgg():
 
-    ac = 'relu'
-    ini = 'he_uniform'
+    ac = keras.layers.ELU()
+    ini = 'he_normal'
     def conv(units, shape):
         return keras.layers.Conv2D(units, shape, 
                 activation=ac, 
@@ -28,8 +28,8 @@ def vgg():
         keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'),
 
         keras.layers.Flatten(),
-        keras.layers.Dense(256, activation=ac),
-        keras.layers.Dense(256, activation=ac),
+        keras.layers.Dense(256, activation=ac, kernel_initializer=ini),
+        keras.layers.Dense(256, activation=ac, kernel_initializer=ini),
         keras.layers.Dense(10)
     ])   
 
@@ -53,11 +53,12 @@ early_cb = keras.callbacks.EarlyStopping(
     restore_best_weights=True
 )
 
-model.compile(optimizer='adam',
+opt = keras.optimizers.Adam(learning_rate=0.0006)
+model.compile(optimizer=opt,
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy'])
 
-# 0.78 on test dataset after 11 epochs. I didn't let it run long enough to verify
+# 0.79 on test dataset after 11 epochs. I didn't let it run long enough to verify
 # statiliby
 model.fit(X_train, y_train, epochs=1000, batch_size=32,
           validation_data=(X_test, y_test), callbacks=[early_cb, model_checkpoint_cp])
