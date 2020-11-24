@@ -1,20 +1,23 @@
+#!/usr/bin/env python
 import pickle as pk
 import numpy as np
 import tensorflow.keras as keras
 import tensorflow as tf
 
 def conv2d_block(units, input_layer, residual=False):
-    cv1 = keras.layers.Conv2D(units, (3, 3), padding='same')(input_layer)
+    ac = keras.layers.ELU()
+    ini = 'he_normal'
+    cv1 = keras.layers.Conv2D(units, (3, 3), kernel_initializer=ini, padding='same')(input_layer)
     bn1 = keras.layers.BatchNormalization()(cv1)
-    ac1 = keras.layers.Activation('relu')(bn1)
+    ac1 = keras.layers.Activation(ac)(bn1)
 
-    cv2 = keras.layers.Conv2D(units, (3, 3), padding='same')(ac1)
+    cv2 = keras.layers.Conv2D(units, (3, 3), kernel_initializer=ini, padding='same')(ac1)
     bn2 = keras.layers.BatchNormalization()(cv2)
-    ac2 = keras.layers.Activation('relu')(bn2)
+    ac2 = keras.layers.Activation(ac)(bn2)
 
-    cv3 = keras.layers.Conv2D(units, (3, 3), padding='same')(ac2)
+    cv3 = keras.layers.Conv2D(units, (3, 3), kernel_initializer=ini, padding='same')(ac2)
     bn3 = keras.layers.BatchNormalization()(cv3)
-    ac3 = keras.layers.Activation('relu')(bn3)
+    ac3 = keras.layers.Activation(ac)(bn3)
     
     return keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same')(ac3)
 
@@ -46,11 +49,13 @@ model_checkpoint_cp = keras.callbacks.ModelCheckpoint(
 )
 
 early_cb = keras.callbacks.EarlyStopping(
-    patience=3,
+    patience=20,
     monitor='val_accuracy',
     restore_best_weights=True
 )
-model.fit(X_train, y_train, epochs=20, batch_size=32,
+
+# 85.5% accuracy in 25 epochs
+model.fit(X_train, y_train, epochs=1000, batch_size=32,
           validation_data=(X_test, y_test),
           callbacks=[model_checkpoint_cp, early_cb])
 
