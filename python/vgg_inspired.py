@@ -17,19 +17,30 @@ def vgg():
         keras.layers.Input(shape=(32, 32, 3)),
         keras.layers.BatchNormalization(),
         conv(64, (3, 3)),
+        keras.layers.BatchNormalization(),
         conv(64, (3, 3)),
+        keras.layers.BatchNormalization(),
         keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'),
         
+        keras.layers.BatchNormalization(),
         conv(128, (3, 3)),
+        keras.layers.BatchNormalization(),
         conv(128, (3, 3)),
+        keras.layers.BatchNormalization(),
         keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'),
+        keras.layers.BatchNormalization(),
         
         conv(256, (3, 3)),
+        keras.layers.BatchNormalization(),
         conv(256, (3, 3)),
+        keras.layers.BatchNormalization(),
         keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'),
+        keras.layers.BatchNormalization(),
 
         keras.layers.Flatten(),
         keras.layers.Dense(256, activation=ac, kernel_initializer=ini),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(rate=0.5),
         keras.layers.Dense(256, activation=ac, kernel_initializer=ini),
         keras.layers.Dense(10)
     ])   
@@ -59,7 +70,7 @@ model.compile(optimizer=opt,
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy'])
 
-# 0.801 on test dataset after 32 epochs. Stable over more than 100 epochs
+# 0.851 on test dataset after 70 epochs. Stable over more than 100 epochs
 model.fit(X_train, y_train, epochs=1000, batch_size=100,
           validation_data=(X_test, y_test), callbacks=[early_cb, model_checkpoint_cp])
 
