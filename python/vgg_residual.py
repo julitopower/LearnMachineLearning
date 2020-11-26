@@ -3,6 +3,7 @@ import pickle as pk
 import numpy as np
 import tensorflow.keras as keras
 import tensorflow as tf
+import basednn
 
 def conv2d_block(units, input_layer, residual=False):
     ac = keras.layers.ELU()
@@ -43,10 +44,13 @@ model.compile(optimizer='adam',
         metrics=['accuracy'])
 
 # Define callbacks, in this case model checkpointing and early stopping
+# And LearningRateScheduler
 model_checkpoint_cp = keras.callbacks.ModelCheckpoint(
     filepath='./.checkpoints/cifar10-{epoch:02d}.hd5', 
     save_best_only=True
 )
+
+lr_scheduler_cb = keras.callbacks.LearningRateScheduler(basednn.DropLearningRate(0.7, 2, 0.001), verbose=True)
 
 early_cb = keras.callbacks.EarlyStopping(
     patience=20,
@@ -54,8 +58,8 @@ early_cb = keras.callbacks.EarlyStopping(
     restore_best_weights=True
 )
 
-# 85.5% accuracy in 25 epochs
+# 86.2% accuracy in 18 epochs
 model.fit(X_train, y_train, epochs=1000, batch_size=32,
           validation_data=(X_test, y_test),
-          callbacks=[model_checkpoint_cp, early_cb])
+          callbacks=[model_checkpoint_cp, early_cb, lr_scheduler_cb])
 

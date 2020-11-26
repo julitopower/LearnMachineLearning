@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow.keras as keras
+import math
 
 class BaseDNN(object):
     def __init__(self):
@@ -43,3 +44,12 @@ class EarlyStopper(object):
         else:
             self.epochs_not_improving += 1
         return self.epochs_not_improving == self.patience
+
+class DropLearningRate(object):
+    def __init__(self, drop_rate, epoch_drop_rate, lr0):
+        self.drop_rate = drop_rate
+        self.lr0 = lr0
+        self.epoch_drop_rate = epoch_drop_rate
+
+    def __call__(self, epoch):
+        return self.lr0 * math.pow(self.drop_rate, math.floor(epoch / self.epoch_drop_rate))
