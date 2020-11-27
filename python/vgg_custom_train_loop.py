@@ -3,6 +3,7 @@ import pickle as pk
 import numpy as np
 import tensorflow.keras as keras
 import tensorflow as tf
+import basednn
 from basednn import DNNLayer, DNNModel, EarlyStopper
 
 
@@ -41,6 +42,7 @@ class VGG(DNNModel):
         ConvBlock(128) +
         ConvBlock(256) +
         keras.layers.GlobalAveragePooling2D() +
+        keras.layers.Dropout(rate=0.5) +
         keras.layers.Dense(10))
 
 ################################################################################
@@ -72,6 +74,10 @@ mean_loss = tf.keras.metrics.Mean()
 train_acc = tf.keras.metrics.SparseCategoricalAccuracy()
 val_loss = tf.keras.metrics.Mean()
 val_acc = tf.keras.metrics.SparseCategoricalAccuracy()
+lr_scheduler = basednn.DropLearningRate(0.65, 2, 0.01)
+#lr_scheduler = basednn.DropLearningRate(0.7, 1, 0.01)
+
+
 
 @tf.function
 def train_fn(X, y):
@@ -106,10 +112,13 @@ def test_fn(X_val, y_val):
 ################################################################################
 # 
 # Actual training loop start here
+# 86.6% accuracy on test dataset with the current configuration
 #
 ################################################################################
-early_stopper = EarlyStopper(patience=10)
+early_stopper = EarlyStopper(patience=20)
 for epoch in range(epochs):
+    # Apply learning rate schedule
+    optimizer.lr = lr_scheduler(epoch)
     for step, (X, y) in enumerate(train_dataset.as_numpy_iterator()):
         train_fn(X, y)
 
@@ -117,9 +126,10 @@ for epoch in range(epochs):
         if step % 10 == 0:
             pass
             print(f'\rStep {step}: train_loss {mean_loss.result():.4f} - train_acc {train_acc.result():.4f}', end='', flush=True)
+    
+
+
     # Caculate validation loss and accuracy
-
-
     for (X_val, y_val) in test_dataset.as_numpy_iterator():
         test_fn(X_val, y_val)
 
