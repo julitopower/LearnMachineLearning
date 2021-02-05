@@ -1,0 +1,26 @@
+name: rl
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - clangdev
+  - cmake=3.18.0
+  - emacs
+  - gcc_linux-64
+  - gtest=1.10.0  
+  - gxx_linux-64
+  - gym=0.18.0
+  - libclang
+  - make
+  - notebook
+  - numpy
+  - pandas
+  - pip
+  - pip:
+    - tensorflow
+    - sklearn
+    - matplotlib
+    - seaborn    
+  - python-language-server
+  - python=3.8
+  - pytorch
