@@ -22,3 +22,5 @@ if(PYTHON_BINDINGS)
       LINKER_LANGUAGE CXX
     )
 endif(PYTHON_BINDINGS)  
+
+add_library(pong SHARED game.cpp)

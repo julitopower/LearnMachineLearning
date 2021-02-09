@@ -118,9 +118,17 @@ public:
 
   int reward() const { return reward_; }
 
-  std::vector<int> state() {
-    return {ball_.x,   ball_.y,     ball_.vx,   ball_.vy, racket_.x,
-            racket_.y, racket_.vx, racket_.vy, reward_};
+  const std::vector<int>& state() {
+    state_[0] = ball_.x;
+    state_[1] = ball_.y;
+    state_[2] = ball_.vx;
+    state_[3] = ball_.vy;
+    state_[4] = racket_.x;
+    state_[5] = racket_.y;
+    state_[6] = racket_.vx;
+    state_[7] = racket_.vy; 
+    state_[8] = reward();
+    return state_;
   }
 
 private:
@@ -129,4 +137,49 @@ private:
   int width_ = 800;
   int height_ = 600;
   int reward_ = 0;
+  std::vector<int> state_ = std::vector<int>(9, 0);
 };
+
+extern "C" {
+  typedef void * PongHdlr;
+  PongHdlr pong_new() {
+    return static_cast<void*>(new Game{});
+  }
+
+  void pong_delete(PongHdlr pong) {
+    delete static_cast<Game*>(pong);
+  }
+
+  void pong_step(PongHdlr pong, int action) {
+    auto& game = *static_cast<Game*>(pong);
+    switch(action) {
+      case 0:
+        game.step(Action::NOOP);
+        break;
+      case 1:
+        game.step(Action::UP);
+        break;
+      case 2:
+        game.step(Action::DOWN);
+        break;
+      default:
+        break;
+    }
+  }
+
+  const int* pong_state(PongHdlr pong) {
+    auto& game = *static_cast<Game*>(pong);
+    return game.state().data();
+  }
+
+  void pong_reset(PongHdlr pong) {
+    auto& game = *static_cast<Game*>(pong);
+    game.reset();
+  }
+
+  int pong_reward(PongHdlr pong) {
+    auto& game = *static_cast<Game*>(pong);
+    return game.reward();
+  }
+  
+}
