@@ -1,6 +1,8 @@
 import ctypes
 from ctypes import cdll, c_void_p, c_int, POINTER
 import random 
+import pgagent
+import numpy as np
 
 
 class Pong():
@@ -44,18 +46,36 @@ class Pong():
 
     def state(self):
         st = list(self.lib.pong_state(self.game).contents)
-        print(st)
-        return st
+        return np.array(st, dtype='double')
 
     def reward(self):
         return self.lib.pong_reward(self.game)
 
 
-if __name__ == "__main__":
+def evaluate(iterations=10000):
     game = Pong()
-
-    while game.reward() != 1:
+    reward = 0
+    for _ in range(0, iterations):
         game.reset()
         while game.reward() == 0:
-            game.step(random.randint(0, 2))
-        game.state()
+            game.step(random.randint(0, 0))
+        if game.reward() == 1:
+            reward += 1
+    return 100 * reward / iterations
+    
+if __name__ == "__main__":
+    print(evaluate())
+
+    agent = pgagent.DummyAgent(9, 3)
+    game = Pong()
+    for i in range(0, 200):
+        game.reset()
+        while game.reward() == 0:
+            state = game.state()
+            action, action_probs = agent.action(state)
+            game.step(action)
+            agent.record(state, action, action_probs, game.reward())
+            # print(state, action, action_probs, game.reward())
+        print(game.state(), action, action_probs)
+        agent.train()
+

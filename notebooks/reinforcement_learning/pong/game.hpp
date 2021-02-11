@@ -87,7 +87,7 @@ public:
 
     // Make sure the ball stays in the court boundaries
     // We will want to add some randomness here, but not yet
-    if (ball_.y + ball_.r >= width_ || ball_.y - ball_.r <= 0) {
+    if (ball_.y + ball_.r >= height_ || ball_.y - ball_.r <= 0) {
       ball_.vy *= -1;
     }
 
@@ -101,7 +101,12 @@ public:
     default:
       break;
     }
+    std::size_t y = racket_.y;
     racket_.update(1);
+    // Make sure the racket statys in the court
+    if (racket_.y + racket_.h >= height_ || racket_.y - racket_.h <= 0) {    
+      racket_.y = y;
+    }
 
     // Check for collision AABB
     // Rightmost edge of Ball is always on the right with respect of the racket
