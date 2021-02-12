@@ -18,6 +18,7 @@ dependencies:
   - pip
   - pip:
     - tensorflow
+    - tensorflow_probability
     - sklearn
     - matplotlib
     - seaborn    
