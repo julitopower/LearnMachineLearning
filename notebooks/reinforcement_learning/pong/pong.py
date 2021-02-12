@@ -54,16 +54,13 @@ class Pong():
 
     def reward(self):
         r = self.lib.pong_reward(self.game)
+
         st = self.state()
-        if r == 0:
-            d = abs( st[1] - st[5])
-            if d < 12:
-                r = 12 - d
-            else:
-                r = -abs(d) / 100.0
-        elif r > 0:
-            r = 10000
-        return r
+        if r > 0:
+            return 1
+        elif r < 0:
+            return -1
+        return -abs(st[5] - st[1]) / ((1 + st[0]) * 1000)
 
     def done(self):
         return self.lib.pong_done(self.game)
@@ -83,9 +80,10 @@ def evaluate(iterations=10000):
 if __name__ == "__main__":
     #print(evaluate())
 
-    agent = pgagent.DummyAgent(8, 3)
+    agent = pgagent.DummyAgent2(8, 3)
     game = Pong()
-    for i in range(0, 200):
+    agent.load('model_new.h5')
+    for i in range(0, 10000):
         print('Executing iteration')
         game.reset()
         idx = 0
@@ -97,5 +95,7 @@ if __name__ == "__main__":
             if idx % 50 == 0:
                 print(state, action, action_probs, game.reward())
             idx += 1
-        print(game.state(), action, action_probs, "Reward: ", game.reward())
+        if i % 5 == 0:
+            agent.save("model_new2.h5")
+        print(game.state(), "iter: ", i, ", Reward: ", game.reward())
         agent.train()
