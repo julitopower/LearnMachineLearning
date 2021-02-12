@@ -57,10 +57,13 @@ class PolicyGradientEngine(object):
         gradients = np.vstack(self.gradients)
         rewards = np.vstack(self.rewards)
         rewards = self.discounted_reward(rewards)
-        rewards = (rewards - np.mean(rewards) / (np.std(rewards) + 1e-7))
+        rewards = ((rewards - np.mean(rewards)) / (np.std(rewards) + 1e-7))
         gradients *= rewards
         X = np.squeeze(np.vstack([self.states]))
         Y = self.action_probs + (self.lr * np.squeeze(np.vstack([gradients])))
+        self.model.train_on_batch(X, Y)
+        self.model.train_on_batch(X, Y)
+        self.model.train_on_batch(X, Y)
         self.model.train_on_batch(X, Y)
         self.states = []
         self.action_probs = []
@@ -72,7 +75,7 @@ class PolicyGradientEngine(object):
 
     def save(self, filepath):
       self.model.save_weights(filepath)
-        
+
 
 class DummyAgent(PolicyGradientEngine):
     def __init__(self, state_dim, action_dim):
@@ -81,12 +84,23 @@ class DummyAgent(PolicyGradientEngine):
     def build_model(self):
         model = keras.Sequential()
         model.add(keras.Input(shape=(self.state_dim,)))
-        model.add(keras.layers.Dense(9, activation='relu'))
-        model.add(keras.layers.Dense(10240, activation='relu'))
-        model.add(keras.layers.Dense(1024, activation='relu'))                
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(256, activation='relu'))
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(16, activation='relu'))
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(32, activation='relu'))
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(64, activation='relu'))
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(128, activation='relu'))
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(256, activation='relu'))
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(512, activation='relu'))
+        model.add(keras.layers.BatchNormalization())
         model.add(keras.layers.Dense(self.action_dim, activation='softmax'))
         optimizer = keras.optimizers.SGD()
         model.compile(loss='categorical_crossentropy', optimizer=optimizer)
         model.summary()
         return model
-

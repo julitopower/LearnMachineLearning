@@ -67,10 +67,11 @@ public:
   Game() : racket_{0, 0, 0, 0}, ball_{0, 0, 0, 0} { srand(time(nullptr)); }
   void reset() {
     ball_.vx = 0;
-    while (ball_.vx == 0) {
-      ball_.vx = -10 * static_cast<double>(rand()) / RAND_MAX;
-    }
-    ball_.vy = -10 * static_cast<double>(rand()) / RAND_MAX;
+    // while (ball_.vx == 0) {
+    //   ball_.vx = -1 * static_cast<double>(rand()) / RAND_MAX;
+    // }
+    ball_.vx = -1;
+    ball_.vy = 0 * static_cast<double>(rand()) / RAND_MAX;
 
     racket_.vx = 0;
     racket_.vy = 0;
@@ -79,6 +80,7 @@ public:
     racket_.x = 0;
     racket_.y = height_ / 2;
     reward_ = 0;
+    done_ = false;
   }
 
   void step(Action action) {
@@ -99,12 +101,13 @@ public:
       racket_.vy = -2;
       break;
     default:
+      racket_.vy = 0;
       break;
     }
     std::size_t y = racket_.y;
     racket_.update(1);
     // Make sure the racket statys in the court
-    if (racket_.y + racket_.h >= height_ || racket_.y - racket_.h <= 0) {    
+    if (racket_.y + racket_.h >= height_ || racket_.y - racket_.h <= 0) {
       racket_.y = y;
     }
 
@@ -116,12 +119,16 @@ public:
         racket_.y + racket_.h > ball_.y - ball_.r) {
       // Collision!
       reward_ = 1;
+      done_ = true;
     } else if (ball_.x <= 0) {
       reward_ = -1;
+      done_ = true;
     }
   }
 
   int reward() const { return reward_; }
+
+  int done() const { return done_; }
 
   const std::vector<int>& state() {
     state_[0] = ball_.x;
@@ -131,8 +138,7 @@ public:
     state_[4] = racket_.x;
     state_[5] = racket_.y;
     state_[6] = racket_.vx;
-    state_[7] = racket_.vy; 
-    state_[8] = reward();
+    state_[7] = racket_.vy;
     return state_;
   }
 
@@ -142,7 +148,8 @@ private:
   int width_ = 800;
   int height_ = 600;
   int reward_ = 0;
-  std::vector<int> state_ = std::vector<int>(9, 0);
+  std::vector<int> state_ = std::vector<int>(8, 0);
+  bool done_ = false;
 };
 
 extern "C" {
@@ -186,5 +193,10 @@ extern "C" {
     auto& game = *static_cast<Game*>(pong);
     return game.reward();
   }
-  
+
+  int pong_done(PongHdlr pong) {
+    auto& game = *static_cast<Game*>(pong);
+    return game.done();
+  }
+
 }

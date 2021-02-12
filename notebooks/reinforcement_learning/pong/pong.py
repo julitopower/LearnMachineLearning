@@ -1,6 +1,6 @@
 import ctypes
-from ctypes import cdll, c_void_p, c_int, POINTER
-import random 
+from ctypes import cdll, c_void_p, c_int, c_bool, POINTER
+import random
 import pgagent
 import numpy as np
 
@@ -22,7 +22,7 @@ class Pong():
 
         # pong_state
         self.lib.pong_state.argtypes = [c_void_p]
-        self.lib.pong_state.restype = POINTER(ctypes.c_int * 9)
+        self.lib.pong_state.restype = POINTER(ctypes.c_int * 8)
 
         # pong_reset
         self.lib.pong_reset.argtypes = [c_void_p]
@@ -30,6 +30,10 @@ class Pong():
         # pong_reward
         self.lib.pong_reward.restype = c_int
         self.lib.pong_reward.argtypes = [c_void_p]
+
+        # pong_reward
+        self.lib.pong_done.restype = c_bool
+        self.lib.pong_done.argtypes = [c_void_p]
 
         # Initialize game
         self.game = self.lib.pong_new()
@@ -49,7 +53,20 @@ class Pong():
         return np.array(st, dtype='double')
 
     def reward(self):
-        return self.lib.pong_reward(self.game)
+        r = self.lib.pong_reward(self.game)
+        st = self.state()
+        if r == 0:
+            d = abs( st[1] - st[5])
+            if d < 12:
+                r = 12 - d
+            else:
+                r = -abs(d) / 100.0
+        elif r > 0:
+            r = 10000
+        return r
+
+    def done(self):
+        return self.lib.pong_done(self.game)
 
 
 def evaluate(iterations=10000):
@@ -62,20 +79,23 @@ def evaluate(iterations=10000):
         if game.reward() == 1:
             reward += 1
     return 100 * reward / iterations
-    
-if __name__ == "__main__":
-    print(evaluate())
 
-    agent = pgagent.DummyAgent(9, 3)
+if __name__ == "__main__":
+    #print(evaluate())
+
+    agent = pgagent.DummyAgent(8, 3)
     game = Pong()
     for i in range(0, 200):
+        print('Executing iteration')
         game.reset()
-        while game.reward() == 0:
+        idx = 0
+        while not game.done():
             state = game.state()
             action, action_probs = agent.action(state)
             game.step(action)
             agent.record(state, action, action_probs, game.reward())
-            # print(state, action, action_probs, game.reward())
-        print(game.state(), action, action_probs)
+            if idx % 50 == 0:
+                print(state, action, action_probs, game.reward())
+            idx += 1
+        print(game.state(), action, action_probs, "Reward: ", game.reward())
         agent.train()
-
