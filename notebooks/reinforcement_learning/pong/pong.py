@@ -80,9 +80,8 @@ def evaluate(iterations=10000):
 if __name__ == "__main__":
     #print(evaluate())
 
-    agent = pgagent.DummyAgent2(8, 3)
+    agent = pgagent.DummyAgent(8, 3)
     game = Pong()
-    agent.load('model_new.h5')
     for i in range(0, 10000):
         print('Executing iteration')
         game.reset()
@@ -96,6 +95,6 @@ if __name__ == "__main__":
                 print(state, action, action_probs, game.reward())
             idx += 1
         if i % 5 == 0:
-            agent.save("model_new2.h5")
+            agent.save("model.h5")
         print(game.state(), "iter: ", i, ", Reward: ", game.reward())
         agent.train()
