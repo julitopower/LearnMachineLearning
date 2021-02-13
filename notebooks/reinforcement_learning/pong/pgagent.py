@@ -5,11 +5,12 @@ import numpy as np
 
 
 class PolicyGradientEngine(object):
-    def __init__(self, state_dim, action_dim):
+    def __init__(self, state_dim, action_dim, gamma=0.99, lr=0.0001, entropy_c=1e-4):
         self.state_dim = state_dim
         self.action_dim = action_dim
-        self.gamma = 0.99
-        self.lr = 0.00000001
+        self.gamma = gamma
+        self.lr = lr
+        self.entropy_c = entropy_c
         
         # States buffer
         self.states = []
@@ -76,7 +77,7 @@ class PolicyGradientEngine(object):
                 log_prob = action_probs.log_prob(actions[idx])
                 entropy_loss = keras.losses.categorical_crossentropy(probs, probs)
                 # TODO: I am not sure about the sign of these term
-                loss += (-r * tf.squeeze(log_prob) + entropy_loss)
+                loss += (-r * tf.squeeze(log_prob) + self.entropy_c * entropy_loss)
         gradient = tape.gradient(loss, self.model.trainable_variables)
         self.model.optimizer.apply_gradients(zip(gradient, self.model.trainable_variables))
         
@@ -93,8 +94,8 @@ class PolicyGradientEngine(object):
 
 
 class DummyAgent(PolicyGradientEngine):
-    def __init__(self, state_dim, action_dim):
-        super().__init__(state_dim, action_dim)
+    def __init__(self, state_dim, action_dim, gamma, lr, entropy_c):    
+        super().__init__(state_dim, action_dim, gamma, lr, entropy_c)
 
     def build_model(self):    
         model = keras.Sequential()
