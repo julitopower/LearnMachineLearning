@@ -12,7 +12,7 @@ if __name__ == "__main__":
     agent = pgagent.DummyAgent(
         env.observation_space.shape[0], env.action_space.n, gamma, lr, entropy_c)
     score_history = []
-    episodes = 2000
+    episodes = 10000
     for i in range(episodes):
         score = 0
         done = False

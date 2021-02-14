@@ -11,7 +11,7 @@ class PolicyGradientEngine(object):
         self.gamma = gamma
         self.lr = lr
         self.entropy_c = entropy_c
-        
+
         # States buffer
         self.states = []
         #  buffer
@@ -63,7 +63,7 @@ class PolicyGradientEngine(object):
         rewards /= (np.std(rewards) + 1e-7)
 
         actions = tf.convert_to_tensor(self.actions, dtype=tf.float32)
-        
+
         X = np.squeeze(np.vstack([self.states]))
         rw = np.array(rewards)
 
@@ -80,7 +80,7 @@ class PolicyGradientEngine(object):
                 loss += (-r * tf.squeeze(log_prob) + self.entropy_c * entropy_loss)
         gradient = tape.gradient(loss, self.model.trainable_variables)
         self.model.optimizer.apply_gradients(zip(gradient, self.model.trainable_variables))
-        
+
         self.states = []
         self.action_probs = []
         self.actions = []
@@ -94,17 +94,19 @@ class PolicyGradientEngine(object):
 
 
 class DummyAgent(PolicyGradientEngine):
-    def __init__(self, state_dim, action_dim, gamma, lr, entropy_c):    
+    def __init__(self, state_dim, action_dim, gamma, lr, entropy_c):
         super().__init__(state_dim, action_dim, gamma, lr, entropy_c)
 
-    def build_model(self):    
+    def build_model(self):
         model = keras.Sequential()
         model.add(keras.Input(shape=(self.state_dim,)))
         model.add(keras.layers.Dense(256, activation='relu', kernel_initializer='glorot_normal'))
         model.add(keras.layers.Dense(1024, activation='relu', kernel_initializer='glorot_normal'))
-        model.add(keras.layers.Dense(4096, activation='relu', kernel_initializer='glorot_normal'))        
+        model.add(keras.layers.Dense(2096, activation='relu', kernel_initializer='glorot_normal'))
+        model.add(keras.layers.Dense(4096, activation='relu', kernel_initializer='glorot_normal'))
+        model.add(keras.layers.Dense(256, activation='relu', kernel_initializer='glorot_normal'))
         model.add(keras.layers.Dense(self.action_dim, activation='softmax'))
         opt = keras.optimizers.Adam(lr=self.lr)
         model.compile(optimizer=opt)
         model.summary()
-        return model    
+        return model
