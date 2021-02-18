@@ -21,6 +21,12 @@
  * Game also tracks a reward value, which is 1 in the case of collision
  * between the Ball and the Racket, or -1 if the Ball goes beyond the
  * Racket.
+ *
+ * There are two sets of coordinates. Ball and Racket represent real world
+ * coordinates as integers, and I assume they are in centimiters. The
+ * Game class maps coordinates and velocities to a resolution expected
+ * by the agent. For instance, we may have a world of 2m x 1m, but the agent
+ * is trained on a 255 x 255 grid.
  */
 
 class Ball {
@@ -37,7 +43,9 @@ public:
     y = values.second;
   }
 
+  // Real world coordinates in cm
   int x, y, vx, vy;
+  // Radius in cm
   const int r = 3;
 };
 
@@ -55,30 +63,41 @@ public:
     y = values.second;
   }
 
+  // Real world coordinates in cm. Represents the center of the racket
+  // The racket corners are calculated from the center, adding/subtracting
+  // widht and hight
   int x, y, vx, vy;
+  // Width in cm: This is actually total_width / 2.
   int w = 3;
+  // Hight in cm: This is actually total_hight / 2.
   int h = 10;
 };
 
+// Enum to capture the player actions
 enum class Action { UP, DOWN, NOOP };
 
 class Game {
 public:
   Game() : racket_{0, 0, 0, 0}, ball_{0, 0, 0, 0} { srand(time(nullptr)); }
-  void reset() {
-    ball_.vx = 0;
-    // while (ball_.vx == 0) {
-    //   ball_.vx = -1 * static_cast<double>(rand()) / RAND_MAX;
-    // }
-    ball_.vx = -1;
-    ball_.vy = 0 * static_cast<double>(rand()) / RAND_MAX;
 
+  void reset() {
+    // Set random ball velocities
+    ball_.vx = 0;
+    while (ball_.vx == 0) {
+      ball_.vx = -10 * static_cast<double>(rand()) / RAND_MAX;
+    }
+
+    ball_.vy = -10 * static_cast<double>(rand()) / RAND_MAX;
+
+    // Position Racket and Ball in initial positions
     racket_.vx = 0;
     racket_.vy = 0;
     ball_.x = width_;
     ball_.y = height_ / 2;
     racket_.x = 0;
     racket_.y = height_ / 2;
+
+    // Reset reward and completion flags
     reward_ = 0;
     done_ = false;
   }
@@ -95,10 +114,10 @@ public:
 
     switch (action) {
     case Action::UP:
-      racket_.vy = 2;
+      racket_.vy = 20;
       break;
     case Action::DOWN:
-      racket_.vy = -2;
+      racket_.vy = -20;
       break;
     default:
       racket_.vy = 0;
@@ -128,75 +147,74 @@ public:
 
   int reward() const { return reward_; }
 
-  int done() const { return done_; }
+  bool done() const { return done_; }
 
-  const std::vector<int>& state() {
-    state_[0] = ball_.x;
-    state_[1] = ball_.y;
-    state_[2] = ball_.vx;
-    state_[3] = ball_.vy;
-    state_[4] = racket_.x;
-    state_[5] = racket_.y;
-    state_[6] = racket_.vx;
-    state_[7] = racket_.vy;
+  const std::vector<double> &state() {
+    state_[0] = ball_.x * xfactor;
+    state_[1] = ball_.y * yfactor;
+    state_[2] = ball_.vx * xfactor;
+    state_[3] = ball_.vy * yfactor;
+    state_[4] = racket_.x * xfactor;
+    state_[5] = racket_.y * yfactor;
+    state_[6] = racket_.vx * xfactor;
+    state_[7] = racket_.vy * yfactor;
     return state_;
   }
 
 private:
   Racket racket_;
   Ball ball_;
-  int width_ = 800;
-  int height_ = 600;
+  int width_ = 2000;
+  int height_ = 1000;
+  int proj_width_ = 255;
+  int proj_height_ = 255;
+  const double xfactor = proj_width_ / static_cast<double>(width_);
+  const double yfactor = proj_height_ / static_cast<double>(height_);
   int reward_ = 0;
-  std::vector<int> state_ = std::vector<int>(8, 0);
+  std::vector<double> state_ = std::vector<double>(8, 0);
   bool done_ = false;
 };
 
 extern "C" {
-  typedef void * PongHdlr;
-  PongHdlr pong_new() {
-    return static_cast<void*>(new Game{});
-  }
+typedef void *PongHdlr;
+PongHdlr pong_new() { return static_cast<void *>(new Game{}); }
 
-  void pong_delete(PongHdlr pong) {
-    delete static_cast<Game*>(pong);
-  }
+void pong_delete(PongHdlr pong) { delete static_cast<Game *>(pong); }
 
-  void pong_step(PongHdlr pong, int action) {
-    auto& game = *static_cast<Game*>(pong);
-    switch(action) {
-      case 0:
-        game.step(Action::NOOP);
-        break;
-      case 1:
-        game.step(Action::UP);
-        break;
-      case 2:
-        game.step(Action::DOWN);
-        break;
-      default:
-        break;
-    }
+void pong_step(PongHdlr pong, int action) {
+  auto &game = *static_cast<Game *>(pong);
+  switch (action) {
+  case 0:
+    game.step(Action::NOOP);
+    break;
+  case 1:
+    game.step(Action::UP);
+    break;
+  case 2:
+    game.step(Action::DOWN);
+    break;
+  default:
+    break;
   }
+}
 
-  const int* pong_state(PongHdlr pong) {
-    auto& game = *static_cast<Game*>(pong);
-    return game.state().data();
-  }
+const double *pong_state(PongHdlr pong) {
+  auto &game = *static_cast<Game *>(pong);
+  return game.state().data();
+}
 
-  void pong_reset(PongHdlr pong) {
-    auto& game = *static_cast<Game*>(pong);
-    game.reset();
-  }
+void pong_reset(PongHdlr pong) {
+  auto &game = *static_cast<Game *>(pong);
+  game.reset();
+}
 
-  int pong_reward(PongHdlr pong) {
-    auto& game = *static_cast<Game*>(pong);
-    return game.reward();
-  }
+int pong_reward(PongHdlr pong) {
+  auto &game = *static_cast<Game *>(pong);
+  return game.reward();
+}
 
-  int pong_done(PongHdlr pong) {
-    auto& game = *static_cast<Game*>(pong);
-    return game.done();
-  }
-
+int pong_done(PongHdlr pong) {
+  auto &game = *static_cast<Game *>(pong);
+  return game.done();
+}
 }

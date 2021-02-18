@@ -77,6 +77,7 @@ class PolicyGradientEngine(object):
                 log_prob = action_probs.log_prob(actions[idx])
                 entropy_loss = keras.losses.categorical_crossentropy(probs, probs)
                 # TODO: I am not sure about the sign of these term
+                # entropy_loss = 0
                 loss += (-r * tf.squeeze(log_prob) + self.entropy_c * entropy_loss)
         gradient = tape.gradient(loss, self.model.trainable_variables)
         self.model.optimizer.apply_gradients(zip(gradient, self.model.trainable_variables))
@@ -94,19 +95,20 @@ class PolicyGradientEngine(object):
 
 
 class DummyAgent(PolicyGradientEngine):
-    def __init__(self, state_dim, action_dim, gamma, lr, entropy_c):
+    def __init__(self, state_dim, action_dim, gamma, lr, entropy_c, layers = [256, 1024, 2096, 4096, 256]):
+        self.layers = layers
         super().__init__(state_dim, action_dim, gamma, lr, entropy_c)
 
     def build_model(self):
         model = keras.Sequential()
         model.add(keras.Input(shape=(self.state_dim,)))
-        model.add(keras.layers.Dense(256, activation='relu', kernel_initializer='glorot_normal'))
-        model.add(keras.layers.Dense(1024, activation='relu', kernel_initializer='glorot_normal'))
-        model.add(keras.layers.Dense(2096, activation='relu', kernel_initializer='glorot_normal'))
-        model.add(keras.layers.Dense(4096, activation='relu', kernel_initializer='glorot_normal'))
-        model.add(keras.layers.Dense(256, activation='relu', kernel_initializer='glorot_normal'))
+
+        for layer in self.layers:
+            model.add(keras.layers.Dense(layer, activation='relu', kernel_initializer='glorot_normal'))
+            #model.add(keras.layers.Dropout(rate=0.6))
+
         model.add(keras.layers.Dense(self.action_dim, activation='softmax'))
-        opt = keras.optimizers.Adam(lr=self.lr)
+        opt = keras.optimizers.Adam(lr=self.lr, clipnorm=0.5)
         model.compile(optimizer=opt)
         model.summary()
         return model

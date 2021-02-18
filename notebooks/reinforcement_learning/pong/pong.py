@@ -1,8 +1,8 @@
-import ctypes
-from ctypes import cdll, c_void_p, c_int, c_bool, POINTER
+from ctypes import cdll, c_void_p, c_int, c_double, c_bool, POINTER
 import random
 import pgagent
 import numpy as np
+import sys
 
 
 class Pong():
@@ -22,7 +22,7 @@ class Pong():
 
         # pong_state
         self.lib.pong_state.argtypes = [c_void_p]
-        self.lib.pong_state.restype = POINTER(ctypes.c_int * 8)
+        self.lib.pong_state.restype = POINTER(c_double * 8)
 
         # pong_reset
         self.lib.pong_reset.argtypes = [c_void_p]
@@ -54,8 +54,16 @@ class Pong():
 
     def reward(self):
         r = self.lib.pong_reward(self.game)
-
         st = self.state()
+
+        if r > 0:
+            return 100
+        elif r < 0:
+            return -abs(st[5] - st[1])
+        else:
+            return -abs(st[5] - st[1]) / ( 1 + st[0])
+
+
         if r > 0:
             return 1
         elif r < 0:
@@ -77,13 +85,23 @@ def evaluate(iterations=10000):
             reward += 1
     return 100 * reward / iterations
 
-if __name__ == "__main__":
-    #print(evaluate())
 
-    agent = pgagent.DummyAgent(8, 3)
+if __name__ == "__main__":
+    # print(evaluate())
+    # Setup numpy
+    np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
+
+    gamma = float(sys.argv[1])
+    lr = float(sys.argv[2])
+    entropy_c = float(sys.argv[3])
+    score_history = []
+
+    agent = pgagent.DummyAgent(8, 3, gamma, lr, entropy_c,
+                               #layers=[32, 10240, 256, 20000, 2560])
+                               #layers=[32, 64, 1024, 2560, 20000, 2560, 1024, 1024, 512])
+                               layers=[64, 256, 512, 1024])
     game = Pong()
     for i in range(0, 10000):
-        print('Executing iteration')
         game.reset()
         idx = 0
         while not game.done():
@@ -92,9 +110,11 @@ if __name__ == "__main__":
             game.step(action)
             agent.record(state, action, action_probs, game.reward())
             if idx % 50 == 0:
+                pass
                 print(state, action, action_probs, game.reward())
             idx += 1
         if i % 5 == 0:
             agent.save("model.h5")
-        print(game.state(), "iter: ", i, ", Reward: ", game.reward())
+        score_history.append(game.reward())
+        print(f"iter0 {i}, reward: {score_history[-1]:.2f}", " -- Avg over 100 episodes", np.mean(score_history[-100:]))
         agent.train()
