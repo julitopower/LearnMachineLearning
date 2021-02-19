@@ -12,7 +12,7 @@ void p(T v) {
 } // unnamed namespace
 
 int main(int argc, char *argv[]) {
-  Game g{};
+  Game g{2000, 1000, 255, 255};
 
 
   while (g.reward() != 1) {

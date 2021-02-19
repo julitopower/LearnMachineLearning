@@ -51,7 +51,8 @@ public:
 
 class Racket {
 public:
-  Racket(int x, int y, int vx, int vy) : x{x}, y{y}, vx{vx}, vy{vy} {}
+  Racket(int x, int y, int vx, int vy, int w, int h)
+      : x{x}, y{y}, vx{vx}, vy{vy}, w{w}, h{h} {}
 
   std::pair<int, int> project(int time_delta) const {
     return {x + vx * time_delta, y + vy * time_delta};
@@ -68,9 +69,9 @@ public:
   // widht and hight
   int x, y, vx, vy;
   // Width in cm: This is actually total_width / 2.
-  int w = 3;
+  int w;
   // Hight in cm: This is actually total_hight / 2.
-  int h = 10;
+  int h;
 };
 
 // Enum to capture the player actions
@@ -78,16 +79,32 @@ enum class Action { UP, DOWN, NOOP };
 
 class Game {
 public:
-  Game() : racket_{0, 0, 0, 0}, ball_{0, 0, 0, 0} { srand(time(nullptr)); }
+  /*! \brief Simulation of a Pong game
+   *
+   * \param width The world width of the court in cm
+   * \param height The world height of the court in cm
+   * \param viewport_x The RL court width (normally smaller than the world one)
+   * \param viewport_y The RL court height (normally smaller than the world one)
+   *
+   * Set the size of the racket as a function of the real world width and
+   * height. For instance, we may want the racket height to be 10% of the court
+   * height.
+   */
+  Game(int width, int height, int viewport_x, int viewport_y)
+      : racket_{0, 0, 0, 0, 3, static_cast<int>(height * .05)},
+        ball_{0, 0, 0, 0}, width_{width}, height_{height},
+        proj_width_{viewport_x}, proj_height_{viewport_y} {
+    srand(time(nullptr));
+  }
 
   void reset() {
     // Set random ball velocities
     ball_.vx = 0;
     while (ball_.vx == 0) {
-      ball_.vx = -10 * static_cast<double>(rand()) / RAND_MAX;
+      ball_.vx = -width_ * 0.01 * static_cast<double>(rand()) / RAND_MAX;
     }
 
-    ball_.vy = -10 * static_cast<double>(rand()) / RAND_MAX;
+    ball_.vy = -height_ * 0.05 * static_cast<double>(rand()) / RAND_MAX;
 
     // Position Racket and Ball in initial positions
     racket_.vx = 0;
@@ -114,10 +131,10 @@ public:
 
     switch (action) {
     case Action::UP:
-      racket_.vy = 20;
+      racket_.vy = height_ * 0.1;
       break;
     case Action::DOWN:
-      racket_.vy = -20;
+      racket_.vy = -height_ * 0.1;
       break;
     default:
       racket_.vy = 0;
@@ -164,10 +181,10 @@ public:
 private:
   Racket racket_;
   Ball ball_;
-  int width_ = 2000;
-  int height_ = 1000;
-  int proj_width_ = 255;
-  int proj_height_ = 255;
+  const int width_;
+  const int height_;
+  const int proj_width_;
+  const int proj_height_;
   const double xfactor = proj_width_ / static_cast<double>(width_);
   const double yfactor = proj_height_ / static_cast<double>(height_);
   int reward_ = 0;
@@ -177,7 +194,10 @@ private:
 
 extern "C" {
 typedef void *PongHdlr;
-PongHdlr pong_new() { return static_cast<void *>(new Game{}); }
+
+PongHdlr pong_new(int w, int h, int pw, int ph) {
+  return static_cast<void *>(new Game{w, h, pw, ph});
+}
 
 void pong_delete(PongHdlr pong) { delete static_cast<Game *>(pong); }
 

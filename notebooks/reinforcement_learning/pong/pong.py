@@ -8,10 +8,12 @@ import sys
 class Pong():
     """Game simulation for Reinforcement learning"""
 
-    def __init__(self):
+    def __init__(self, world_w=2000, world_h=1000, proj_w=255, proj_h=255):
         # TODO: Remove hardcoded relative path to shared library
         self.lib = cdll.LoadLibrary('./build/libpong.so')
+
         # pong_new
+        self.lib.pong_new.argtypes = [c_int, c_int, c_int, c_int]
         self.lib.pong_new.restype = c_void_p
 
         # pong_delete
@@ -36,7 +38,7 @@ class Pong():
         self.lib.pong_done.argtypes = [c_void_p]
 
         # Initialize game
-        self.game = self.lib.pong_new()
+        self.game = self.lib.pong_new(world_w, world_h, proj_w, proj_h)
         self.lib.pong_reset(self.game)
 
     def step(self, action):
@@ -88,7 +90,7 @@ def evaluate(iterations=10000):
 
 if __name__ == "__main__":
     # print(evaluate())
-    # Setup numpy
+    # Setup numpy print options
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
     gamma = float(sys.argv[1])
@@ -100,7 +102,7 @@ if __name__ == "__main__":
                                #layers=[32, 10240, 256, 20000, 2560])
                                #layers=[32, 64, 1024, 2560, 20000, 2560, 1024, 1024, 512])
                                layers=[64, 256, 512, 1024])
-    game = Pong()
+    game = Pong(400, 200, 400, 200)
     for i in range(0, 10000):
         game.reset()
         idx = 0
@@ -111,7 +113,7 @@ if __name__ == "__main__":
             agent.record(state, action, action_probs, game.reward())
             if idx % 50 == 0:
                 pass
-                print(state, action, action_probs, game.reward())
+                # print(state, action, action_probs, game.reward())
             idx += 1
         if i % 5 == 0:
             agent.save("model.h5")
