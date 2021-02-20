@@ -101,7 +101,7 @@ public:
     // Set random ball velocities
     ball_.vx = 0;
     while (ball_.vx == 0) {
-      ball_.vx = -width_ * 0.01 * static_cast<double>(rand()) / RAND_MAX;
+      ball_.vx = -width_ * 0.005 * static_cast<double>(rand()) / RAND_MAX;
     }
 
     ball_.vy = -height_ * 0.05 * static_cast<double>(rand()) / RAND_MAX;
@@ -131,10 +131,10 @@ public:
 
     switch (action) {
     case Action::UP:
-      racket_.vy = height_ * 0.1;
+      racket_.vy = height_ * 0.025;
       break;
     case Action::DOWN:
-      racket_.vy = -height_ * 0.1;
+      racket_.vy = -height_ * 0.025;
       break;
     default:
       racket_.vy = 0;
