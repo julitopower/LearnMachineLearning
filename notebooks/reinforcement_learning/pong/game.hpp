@@ -29,10 +29,17 @@
  * is trained on a 255 x 255 grid.
  */
 
-class Ball {
-public:
+/*! \brief A ball in our pong game */
+struct Ball {
+  /*!
+   * \param x Real world x coordinate in cm
+   * \param y Real world y coordinate in cm
+   * \param vx Real world velocity in the x axis in cm/step
+   * \param vy Real world velocity in the y axis in cm/step
+   */
   Ball(int x, int y, int vx, int vy) : x{x}, y{y}, vx{vx}, vy{vy} {}
 
+  /*! \brief Project the state in time time_delta steps */
   std::pair<int, int> project(int time_delta) const {
     return {x + vx * time_delta, y + vy * time_delta};
   }
