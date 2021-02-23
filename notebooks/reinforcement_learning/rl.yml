@@ -25,3 +25,4 @@ dependencies:
   - python-language-server
   - python=3.8
   - pytorch
+  - sdl2

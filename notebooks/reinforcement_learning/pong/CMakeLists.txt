@@ -24,3 +24,12 @@ if(PYTHON_BINDINGS)
 endif(PYTHON_BINDINGS)  
 
 add_library(pong SHARED game.cpp)
+
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+find_package(SDL2 REQUIRED)
+message(STATUS "${SDL2_INCLUDE_DIRS}")
+include_directories(${SDL2_INCLUDE_DIRS})
+
+add_executable(sdl sdl_main.cpp sdl.hpp)
+target_link_libraries(sdl SDL2)
