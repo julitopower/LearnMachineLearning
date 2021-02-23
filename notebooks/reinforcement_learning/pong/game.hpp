@@ -7,7 +7,7 @@
 #include <vector>
 
 /*!
- * These are the elements necessary to define a very rudimentary
+ * These are the elements necessary to define a very simplistic
  * pong-lite game. In fact the is only one Racket, and a Ball.
  * The Ball is launched from the right of the screen with a random
  * velocity, and the player can control the Racket, up and down.
