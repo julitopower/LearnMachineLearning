@@ -52,8 +52,8 @@ struct Ball {
 
   // Real world coordinates in cm
   int x, y, vx, vy;
-  // Radius in cm
-  const int r = 3;
+  // TODO: Don't hardcode the radius. Radius in cm
+  const int r = 10;
 };
 
 class Racket {
@@ -98,7 +98,8 @@ public:
    * height.
    */
   Game(int width, int height, int viewport_x, int viewport_y)
-      : racket_{0, 0, 0, 0, 3, static_cast<int>(height * .05)},
+      // TODO: Don't hardcode the width
+      : racket_{0, 0, 0, 0, 5, static_cast<int>(height * .05)},
         ball_{0, 0, 0, 0}, width_{width}, height_{height},
         proj_width_{viewport_x}, proj_height_{viewport_y} {
     srand(time(nullptr));
@@ -116,9 +117,9 @@ public:
     // Position Racket and Ball in initial positions
     racket_.vx = 0;
     racket_.vy = 0;
-    ball_.x = width_;
+    ball_.x = width_ - ball_.r * 2 - 1;
     ball_.y = height_ / 2;
-    racket_.x = 0;
+    racket_.x = racket_.w * 2 + 1;
     racket_.y = height_ / 2;
 
     // Reset reward and completion flags
@@ -183,6 +184,14 @@ public:
     state_[6] = racket_.vx * xfactor;
     state_[7] = racket_.vy * yfactor;
     return state_;
+  }
+
+  const Racket& racket() const {
+    return racket_;
+  }
+
+  const Ball& ball() const {
+    return ball_;
   }
 
 private:
