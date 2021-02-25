@@ -10,7 +10,7 @@ class Pong():
 
     def __init__(self, world_w=2000, world_h=1000, proj_w=255, proj_h=255):
         # TODO: Remove hardcoded relative path to shared library
-        self.lib = cdll.LoadLibrary('./build/libpong.so')
+        self.lib = cdll.LoadLibrary('./build/pong.so')
 
         # pong_new
         self.lib.pong_new.argtypes = [c_int, c_int, c_int, c_int]
@@ -18,6 +18,9 @@ class Pong():
 
         # pong_delete
         self.lib.pong_delete.argtypes = [c_void_p]
+
+        # pong_render
+        self.lib.pong_render.argtypes = [c_void_p]
 
         # pong_step
         self.lib.pong_step.argtypes = [c_void_p, c_int]
@@ -75,6 +78,9 @@ class Pong():
     def done(self):
         return self.lib.pong_done(self.game)
 
+    def render(self):
+        self.lib.pong_render(self.game)
+
 
 def evaluate(iterations=10000):
     game = Pong()
@@ -102,7 +108,8 @@ if __name__ == "__main__":
                                #layers=[32, 10240, 256, 20000, 2560])
                                #layers=[32, 64, 1024, 2560, 20000, 2560, 1024, 1024, 512])
                                layers=[64, 256, 512, 1024])
-    game = Pong(400, 200, 400, 200)
+    agent.load("model__test.h5")
+    game = Pong(800, 600, int(400/1.5), int(200/1.5))
     for i in range(0, 10000):
         game.reset()
         idx = 0
@@ -115,8 +122,9 @@ if __name__ == "__main__":
                 pass
                 # print(state, action, action_probs, game.reward())
             idx += 1
+            game.render()
         if i % 5 == 0:
-            agent.save("model.h5")
+            agent.save("model___new_test.h5")
         score_history.append(game.reward())
         print(f"iter0 {i}, reward: {score_history[-1]:.2f}", " -- Avg over 100 episodes", np.mean(score_history[-100:]))
         agent.train()

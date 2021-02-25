@@ -6,6 +6,8 @@
 #include <typeinfo>
 #include <vector>
 
+#include "sdl.hpp"
+
 /*!
  * These are the elements necessary to define a very simplistic
  * pong-lite game. In fact the is only one Racket, and a Ball.
@@ -194,6 +196,16 @@ public:
     return ball_;
   }
 
+  void render() const {
+    auto& win_ = viz::Window::get();
+    win_.clear();
+    win_.add_rect(0, 0, width_, height_);
+    win_.add_rect(1, 1, width_ - 2, height_ - 2);
+    win_.fill_rect(ball_.x, ball_.y, ball_.r, ball_.r);
+    win_.fill_rect(racket_.x, racket_.y, racket_.w, racket_.h);
+    win_.present();
+  }
+
 private:
   Racket racket_;
   Ball ball_;
@@ -206,6 +218,7 @@ private:
   int reward_ = 0;
   std::vector<double> state_ = std::vector<double>(8, 0);
   bool done_ = false;
+  viz::Window* win_ = nullptr;
 };
 
 extern "C" {
@@ -252,5 +265,10 @@ int pong_reward(PongHdlr pong) {
 int pong_done(PongHdlr pong) {
   auto &game = *static_cast<Game *>(pong);
   return game.done();
+}
+
+void pong_render(PongHdlr pong) {
+  auto &game = *static_cast<Game *>(pong);
+  game.render();
 }
 }
