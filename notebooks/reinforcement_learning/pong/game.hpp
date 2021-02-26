@@ -34,6 +34,9 @@
 /*! \brief A ball in our pong game */
 struct Ball {
   /*!
+   * Coordinates indicate a corner of the squared ball. The ball extends to
+   * (x + width, y + hight)
+   *
    * \param x Real world x coordinate in cm
    * \param y Real world y coordinate in cm
    * \param vx Real world velocity in the x axis in cm/step
@@ -60,8 +63,16 @@ struct Ball {
 
 class Racket {
 public:
-  Racket(int x, int y, int vx, int vy, int w, int h)
-      : x{x}, y{y}, vx{vx}, vy{vy}, w{w}, h{h} {}
+  /*!
+   * Coordinates indicate a corner of the squared racket. The ball extends to
+   * (x + width, y + hight)
+   *
+   * \param x Real world x coordinate in cm
+   * \param y Real world y coordinate in cm
+   * \param vx Real world velocity in the x axis in cm/step
+   * \param vy Real world velocity in the y axis in cm/step
+   */
+  Racket(int x, int y, int w, int h) : x{x}, y{y}, w{w}, h{h} {}
 
   std::pair<int, int> project(int time_delta) const {
     return {x + vx * time_delta, y + vy * time_delta};
@@ -77,9 +88,9 @@ public:
   // The racket corners are calculated from the center, adding/subtracting
   // widht and hight
   int x, y, vx, vy;
-  // Width in cm: This is actually total_width / 2.
+  // width in cm
   int w;
-  // Hight in cm: This is actually total_hight / 2.
+  // height in cm
   int h;
 };
 
@@ -101,9 +112,9 @@ public:
    */
   Game(int width, int height, int viewport_x, int viewport_y)
       // TODO: Don't hardcode the width
-      : racket_{0, 0, 0, 0, 5, static_cast<int>(height * .05)},
-        ball_{0, 0, 0, 0}, width_{width}, height_{height},
-        proj_width_{viewport_x}, proj_height_{viewport_y} {
+      : racket_{0, 0, 5, static_cast<int>(height * .05)}, ball_{0, 0, 0, 0},
+        width_{width}, height_{height}, proj_width_{viewport_x},
+        proj_height_{viewport_y} {
     srand(time(nullptr));
   }
 
@@ -111,17 +122,17 @@ public:
     // Set random ball velocities
     ball_.vx = 0;
     while (ball_.vx == 0) {
-      ball_.vx = -width_ * 0.005 * static_cast<double>(rand()) / RAND_MAX;
+      ball_.vx = -width_ * 0.01 * static_cast<double>(rand()) / RAND_MAX;
     }
 
-    ball_.vy = -height_ * 0.05 * static_cast<double>(rand()) / RAND_MAX;
+    ball_.vy = -height_ * 0.01 * static_cast<double>(rand()) / RAND_MAX;
 
     // Position Racket and Ball in initial positions
     racket_.vx = 0;
     racket_.vy = 0;
-    ball_.x = width_ - ball_.r * 2 - 1;
+    ball_.x = width_ - ball_.r - 1;
     ball_.y = height_ / 2;
-    racket_.x = racket_.w * 2 + 1;
+    racket_.x = racket_.w + 1;
     racket_.y = height_ / 2;
 
     // Reset reward and completion flags
@@ -135,7 +146,7 @@ public:
 
     // Make sure the ball stays in the court boundaries
     // We will want to add some randomness here, but not yet
-    if (ball_.y + ball_.r >= height_ || ball_.y - ball_.r <= 0) {
+    if (ball_.y + ball_.r >= height_ || ball_.y <= 0) {
       ball_.vy *= -1;
     }
 
@@ -153,16 +164,15 @@ public:
     std::size_t y = racket_.y;
     racket_.update(1);
     // Make sure the racket statys in the court
-    if (racket_.y + racket_.h >= height_ || racket_.y - racket_.h <= 0) {
+    if (racket_.y + racket_.h >= height_ || racket_.y <= 0) {
       racket_.y = y;
     }
 
     // Check for collision AABB
     // Rightmost edge of Ball is always on the right with respect of the racket
     // leftmost edge
-    if (racket_.x + racket_.w > ball_.x - ball_.r &&
-        racket_.y - racket_.h < ball_.y + ball_.r &&
-        racket_.y + racket_.h > ball_.y - ball_.r) {
+    if (racket_.x < ball_.x + ball_.r && racket_.x + racket_.w > ball_.x &&
+        racket_.y < ball_.y + ball_.r && racket_.y + racket_.h > ball_.y) {
       // Collision!
       reward_ = 1;
       done_ = true;
@@ -188,19 +198,17 @@ public:
     return state_;
   }
 
-  const Racket& racket() const {
-    return racket_;
-  }
+  const Racket &racket() const { return racket_; }
 
-  const Ball& ball() const {
-    return ball_;
-  }
+  const Ball &ball() const { return ball_; }
 
   void render() const {
-    auto& win_ = viz::Window::get();
+    auto &win_ = viz::Window::get();
     win_.clear();
+    // Draw court with a linewidth of 2
     win_.add_rect(0, 0, width_, height_);
     win_.add_rect(1, 1, width_ - 2, height_ - 2);
+
     win_.fill_rect(ball_.x, ball_.y, ball_.r, ball_.r);
     win_.fill_rect(racket_.x, racket_.y, racket_.w, racket_.h);
     win_.present();
@@ -218,7 +226,7 @@ private:
   int reward_ = 0;
   std::vector<double> state_ = std::vector<double>(8, 0);
   bool done_ = false;
-  viz::Window* win_ = nullptr;
+  viz::Window *win_ = nullptr;
 };
 
 extern "C" {
