@@ -108,7 +108,8 @@ if __name__ == "__main__":
                                #layers=[32, 10240, 256, 20000, 2560])
                                #layers=[32, 64, 1024, 2560, 20000, 2560, 1024, 1024, 512])
                                layers=[64, 256, 512, 1024])
-    agent.load("model__test.h5")
+    #agent.load("model__test.h5")
+    #agent.load('model___new_test.h5')
     game = Pong(800, 600, int(400/1.5), int(200/1.5))
     for i in range(0, 10000):
         game.reset()
@@ -123,7 +124,7 @@ if __name__ == "__main__":
                 # print(state, action, action_probs, game.reward())
             idx += 1
             game.render()
-        if i % 5 == 0:
+        if i % 10 == 0:
             agent.save("model___new_test.h5")
         score_history.append(game.reward())
         print(f"iter0 {i}, reward: {score_history[-1]:.2f}", " -- Avg over 100 episodes", np.mean(score_history[-100:]))

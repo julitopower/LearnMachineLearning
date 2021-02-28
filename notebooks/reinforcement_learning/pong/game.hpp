@@ -131,9 +131,9 @@ public:
     racket_.vx = 0;
     racket_.vy = 0;
     ball_.x = width_ - ball_.r - 1;
-    ball_.y = height_ / 2;
+    ball_.y = height_ * static_cast<double>(rand()) / RAND_MAX;
     racket_.x = racket_.w + 1;
-    racket_.y = height_ / 2;
+    racket_.y = height_ * static_cast<double>(rand()) / RAND_MAX;;
 
     // Reset reward and completion flags
     reward_ = 0;
@@ -152,10 +152,10 @@ public:
 
     switch (action) {
     case Action::UP:
-      racket_.vy = height_ * 0.025;
+      racket_.vy = height_ * 0.004;
       break;
     case Action::DOWN:
-      racket_.vy = -height_ * 0.025;
+      racket_.vy = -height_ * 0.004;
       break;
     default:
       racket_.vy = 0;
