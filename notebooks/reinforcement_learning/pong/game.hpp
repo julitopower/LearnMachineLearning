@@ -131,9 +131,9 @@ public:
     racket_.vx = 0;
     racket_.vy = 0;
     ball_.x = width_ - ball_.r - 1;
-    ball_.y = height_ * static_cast<double>(rand()) / RAND_MAX;
+    ball_.y = ball_.r + (height_ - ball_.r * 2) * static_cast<double>(rand()) / RAND_MAX;
     racket_.x = racket_.w + 1;
-    racket_.y = height_ * static_cast<double>(rand()) / RAND_MAX;;
+    racket_.y = racket_.h + (height_ - racket_.h * 2) * static_cast<double>(rand()) / RAND_MAX;
 
     // Reset reward and completion flags
     reward_ = 0;
@@ -152,10 +152,10 @@ public:
 
     switch (action) {
     case Action::UP:
-      racket_.vy = height_ * 0.004;
+      racket_.vy = height_ * 0.008;
       break;
     case Action::DOWN:
-      racket_.vy = -height_ * 0.004;
+      racket_.vy = -height_ * 0.008;
       break;
     default:
       racket_.vy = 0;
@@ -177,12 +177,13 @@ public:
       reward_ = 1;
       done_ = true;
     } else if (ball_.x <= 0) {
-      reward_ = -1;
+      // The reward will be the negative difference between the centers
+      reward_ = -std::abs(ball_.y + ball_.r / 2 - racket_.y + racket_.h / 2) * yfactor;
       done_ = true;
     }
   }
 
-  int reward() const { return reward_; }
+  double reward() const { return reward_; }
 
   bool done() const { return done_; }
 
@@ -223,7 +224,7 @@ private:
   const int proj_height_;
   const double xfactor = proj_width_ / static_cast<double>(width_);
   const double yfactor = proj_height_ / static_cast<double>(height_);
-  int reward_ = 0;
+  double reward_ = 0.0;
   std::vector<double> state_ = std::vector<double>(8, 0);
   bool done_ = false;
   viz::Window *win_ = nullptr;
@@ -265,7 +266,7 @@ void pong_reset(PongHdlr pong) {
   game.reset();
 }
 
-int pong_reward(PongHdlr pong) {
+double pong_reward(PongHdlr pong) {
   auto &game = *static_cast<Game *>(pong);
   return game.reward();
 }

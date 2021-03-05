@@ -33,7 +33,7 @@ class Pong():
         self.lib.pong_reset.argtypes = [c_void_p]
 
         # pong_reward
-        self.lib.pong_reward.restype = c_int
+        self.lib.pong_reward.restype = c_double
         self.lib.pong_reward.argtypes = [c_void_p]
 
         # pong_reward
@@ -64,8 +64,9 @@ class Pong():
         if r > 0:
             return 100
         elif r < 0:
-            return -abs(st[5] - st[1])
+            return r
         else:
+            return 0
             return -abs(st[5] - st[1]) / ( 1 + st[0])
 
 
@@ -102,6 +103,7 @@ if __name__ == "__main__":
     gamma = float(sys.argv[1])
     lr = float(sys.argv[2])
     entropy_c = float(sys.argv[3])
+    render = bool(int(sys.argv[4]))
     score_history = []
 
     agent = pgagent.DummyAgent(8, 3, gamma, lr, entropy_c,
@@ -110,7 +112,7 @@ if __name__ == "__main__":
                                layers=[64, 256, 512, 1024])
     #agent.load("model__test.h5")
     #agent.load('model___new_test.h5')
-    game = Pong(800, 600, int(400/1.5), int(200/1.5))
+    game = Pong(800, 600, int(400/2), int(200/2))
     for i in range(0, 10000):
         game.reset()
         idx = 0
@@ -123,7 +125,8 @@ if __name__ == "__main__":
                 pass
                 # print(state, action, action_probs, game.reward())
             idx += 1
-            game.render()
+            if render:
+                game.render()
         if i % 10 == 0:
             agent.save("model___new_test.h5")
         score_history.append(game.reward())
