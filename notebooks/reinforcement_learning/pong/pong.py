@@ -1,6 +1,7 @@
 from ctypes import cdll, c_void_p, c_int, c_double, c_bool, POINTER
 import random
 import pgagent
+import actorcriticagent2
 import numpy as np
 import sys
 
@@ -106,12 +107,18 @@ if __name__ == "__main__":
     render = bool(int(sys.argv[4]))
     score_history = []
 
-    agent = pgagent.DummyAgent(8, 3, gamma, lr, entropy_c,
-                               #layers=[32, 10240, 256, 20000, 2560])
-                               #layers=[32, 64, 1024, 2560, 20000, 2560, 1024, 1024, 512])
-                               layers=[64, 256, 512, 1024])
-    #agent.load("model__test.h5")
-    #agent.load('model___new_test.h5')
+    agent = actorcriticagent2.DummyAgent(8, 3, gamma, lr, entropy_c,
+                                        #layers=[32, 10240, 256, 20000, 2560])
+                                        #layers=[32, 64, 1024, 2560, 20000, 2560, 1024, 1024, 512])
+                                        layers_actor=[64, 256, 512, 1024],
+                                        layers_critic=[64, 256, 64])
+    # agent.load("model__test.h5")
+    # agent.load('model___new_test.h5')
+    # agent.load('model_good_march_3rd.h5')
+    try:
+        agent.load('ac_03072021.h5')
+    except:
+        pass
     game = Pong(800, 600, int(400/2), int(200/2))
     for i in range(0, 10000):
         game.reset()
@@ -128,7 +135,7 @@ if __name__ == "__main__":
             if render:
                 game.render()
         if i % 10 == 0:
-            agent.save("model___new_test.h5")
+            agent.save("ac_03072021.h5")
         score_history.append(game.reward())
         print(f"iter0 {i}, reward: {score_history[-1]:.2f}", " -- Avg over 100 episodes", np.mean(score_history[-100:]))
         agent.train()
