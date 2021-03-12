@@ -15,7 +15,7 @@ option(PYTHON_BINDINGS "Build Python3 bindings" ON)
 
 if(PYTHON_BINDINGS)
   message(STATUS "Python3 bindings build ON")
-  find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+  find_package(Python3 REQUIRED COMPONENTS Development)
   include_directories(${Python3_INCLUDE_DIRS})  
 
   add_library(pong_py_bindings SHARED pong_python.cpp)
