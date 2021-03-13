@@ -1,9 +1,8 @@
 from ctypes import cdll, c_void_p, c_int, c_double, c_bool, POINTER
 import random
-import pgagent
 import actorcriticagent2
 import numpy as np
-import sys
+import argparse as ap
 
 
 class Pong():
@@ -97,14 +96,24 @@ def evaluate(iterations=10000):
 
 
 if __name__ == "__main__":
+    
+    parser = ap.ArgumentParser(description="Pong game RL")
+    parser.add_argument("--gamma", type=float, required=True)
+    parser.add_argument("--lr", help="Learning rate", type=float, required=True)
+    parser.add_argument("--er", help="Entropy rate", type=float, required=True)
+    parser.add_argument("-v", "--verbose", help="Visualize pong game", action="store_true", required=True)
+    args = parser.parse_args()
+
+    print(f"#######{args.gamma}")
+
     # print(evaluate())
     # Setup numpy print options
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
-    gamma = float(sys.argv[1])
-    lr = float(sys.argv[2])
-    entropy_c = float(sys.argv[3])
-    render = bool(int(sys.argv[4]))
+    gamma = args.gamma
+    lr = args.lr
+    entropy_c = args.er
+    render = args.v
     score_history = []
 
     agent = actorcriticagent2.DummyAgent(8, 3, gamma, lr, entropy_c,
@@ -117,6 +126,7 @@ if __name__ == "__main__":
     # agent.load('model_good_march_3rd.h5')
     try:
         agent.load('ac_03072021.h5')
+        print("######### Model loaded succesfully")
     except:
         pass
     game = Pong(800, 600, int(400/2), int(200/2))

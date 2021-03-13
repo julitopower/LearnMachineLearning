@@ -1,6 +1,7 @@
 import gym
 import numpy as np
 import pgagent
+import actorcriticagent2
 import sys
 
 if __name__ == "__main__":
@@ -9,7 +10,7 @@ if __name__ == "__main__":
     entropy_c = float(sys.argv[3])
   
     env = gym.make('CartPole-v0')
-    agent = pgagent.DummyAgent(
+    agent = actorcriticagent2.DummyAgent(
         env.observation_space.shape[0], env.action_space.n, gamma, lr, entropy_c)
     score_history = []
     episodes = 10000
