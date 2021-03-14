@@ -52,8 +52,8 @@ def get_agent(params):
                                             params.lr,
                                             params.lr2,
                                             params.er,
-                                            layers_actor=[64, 256, 512, 1024],
-                                            layers_critic=[64, 256, 64])
+                                            layers_actor=[64, 256, 512, 1024, 2048, 256, 64],
+                                            layers_critic=[64, 256, 512, 64])
 
 
 if __name__ == "__main__":
@@ -66,7 +66,9 @@ if __name__ == "__main__":
     parser.add_argument("--env", help="Environment name",
                         type=str, default='cartpole')
     parser.add_argument("--agent", help="Agent name",
-                        type=str, default='ac2')    
+                        type=str, default='ac2')
+    parser.add_argument("-i", help="Model to load", type=str)
+    parser.add_argument("-o", help="Model to save to", type=str)            
     parser.add_argument("-v", help="Visualize pong game",
                         action="store_true", default=False)
     args = parser.parse_args()
@@ -75,6 +77,11 @@ if __name__ == "__main__":
     params = get_params(
         args, env.observation_space.shape[0], env.action_space.n)
     agent = get_agent(params)
+    try:
+        agent.load(args.i)
+    except:
+        pass
+    
 
     # Setup numpy print options
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
@@ -92,8 +99,14 @@ if __name__ == "__main__":
             agent.record(obs, action, probs, reward)
             obs = obs_next
             score += reward
-            if i % 10 == 0 and params.verbose:
-                env.render()            
+            if params.verbose:
+                env.render()
+            if i % 10 == 0:
+                try:
+                    agent.save(args.o)
+                except:
+                    pass
+                
         score_history.append(score)
 
         agent.train()

@@ -95,12 +95,12 @@ class ActorCriticEngine(object):
         self.rewards = []
 
     def load(self, filepath):
-      self.modela.load_weights("actor_" + filepath)
-      self.modelc.load_weights("critit" + filepath)              
+      self.modela.load_weights("actor_" + filepath + ".h5")
+      self.modelc.load_weights("critic_" + filepath + ".h5")              
 
     def save(self, filepath):
-      self.modela.save_weights("actor_" + filepath)
-      self.modelc.save_weights("critit" + filepath)      
+      self.modela.save_weights("actor_" + filepath + ".h5")
+      self.modelc.save_weights("critic_" + filepath + ".h5")      
 
 
 class DummyAgent(ActorCriticEngine):

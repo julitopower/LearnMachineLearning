@@ -4,6 +4,14 @@ import actorcriticagent2
 import numpy as np
 import argparse as ap
 
+class Observation():
+    def __init__(self):
+        self.shape = [8]
+
+
+class Action():
+    def __init__(self):
+        self.n = 3
 
 class Pong():
     """Game simulation for Reinforcement learning"""
@@ -44,14 +52,19 @@ class Pong():
         self.game = self.lib.pong_new(world_w, world_h, proj_w, proj_h)
         self.lib.pong_reset(self.game)
 
+        self.observation_space = Observation()
+        self.action_space = Action()
+
     def step(self, action):
         self.lib.pong_step(self.game, action)
+        return (self.state(), self.reward(), self.done(), None)
 
     def __del__(self):
         self.lib.pong_delete(self.game)
 
     def reset(self):
         self.lib.pong_reset(self.game)
+        return self.state()
 
     def state(self):
         st = list(self.lib.pong_state(self.game).contents)
@@ -96,7 +109,7 @@ def evaluate(iterations=10000):
 
 
 if __name__ == "__main__":
-    
+
     parser = ap.ArgumentParser(description="Pong game RL")
     parser.add_argument("--gamma", type=float, required=True)
     parser.add_argument("--lr", help="Learning rate", type=float, required=True)
