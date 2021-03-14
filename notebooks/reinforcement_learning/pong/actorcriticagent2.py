@@ -9,13 +9,14 @@ class ActorCriticEngine(object):
 
     See: https://keras.io/examples/rl/actor_critic_cartpole/#implement-actor-critic-network
     """
-    def __init__(self, state_dim, action_dim, gamma=0.99, lr=0.0001, entropy_c=1e-4):
+    def __init__(self, state_dim, action_dim, gamma=0.99, lr=0.0001, lr2=0.001, entropy_c=1e-4):
         self.state_dim = state_dim
         self.action_dim = action_dim
         # Reward discount factor
         self.gamma = gamma
         # Learning rate
         self.lr = lr
+        self.lr2 = lr2
         # How much entropy to consider in the action loss
         self.entropy_c = entropy_c
 
@@ -103,12 +104,12 @@ class ActorCriticEngine(object):
 
 
 class DummyAgent(ActorCriticEngine):
-    def __init__(self, state_dim, action_dim, gamma, lr, entropy_c,
+    def __init__(self, state_dim, action_dim, gamma, lr, lr2, entropy_c,
                  layers_actor=[256, 1024, 2096, 4096, 256],
                  layers_critic=[256, 1024, 2096, 4096, 256]):        
         self.layers_actor = layers_actor
         self.layers_critic = layers_critic
-        super().__init__(state_dim, action_dim, gamma, lr, entropy_c)
+        super().__init__(state_dim, action_dim, gamma, lr, lr2, entropy_c)
 
     def build_model(self):
         model = keras.Sequential()
@@ -132,7 +133,7 @@ class DummyAgent(ActorCriticEngine):
             #model.add(keras.layers.Dropout(rate=0.6))
 
         model.add(keras.layers.Dense(1))
-        opt = keras.optimizers.Adam(lr=self.lr, clipnorm=0.5)
+        opt = keras.optimizers.Adam(lr=self.lr2, clipnorm=0.5)
         model.compile(optimizer=opt)    
         model.summary()        
 

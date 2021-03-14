@@ -7,11 +7,12 @@ import sys
 if __name__ == "__main__":
     gamma = float(sys.argv[1])
     lr = float(sys.argv[2])
-    entropy_c = float(sys.argv[3])
+    lr2 = float(sys.argv[3])
+    entropy_c = float(sys.argv[4])
   
     env = gym.make('CartPole-v0')
     agent = actorcriticagent2.DummyAgent(
-        env.observation_space.shape[0], env.action_space.n, gamma, lr, entropy_c)
+        env.observation_space.shape[0], env.action_space.n, gamma, lr, lr2, entropy_c)
     score_history = []
     episodes = 10000
     for i in range(episodes):
