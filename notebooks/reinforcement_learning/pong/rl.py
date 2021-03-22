@@ -32,6 +32,7 @@ def get_params(args, state_dim, actions_dim):
     params.state_dim = state_dim
     params.actions_dim = actions_dim
     params.agent = args.agent
+    params.swa = args.swa
     return params
 
 
@@ -54,6 +55,16 @@ def get_agent(params):
                                             params.er,
                                             layers_actor=[64, 256, 512, 1024, 2048, 256, 64],
                                             layers_critic=[64, 256, 512, 64])
+    if params.agent == 'pg':
+        return pgagent.DummyAgent(
+            params.state_dim,
+            params.actions_dim,
+            params.gamma,
+            params.lr,
+            params.er,
+            layers=[64, 256, 512, 1024, 2048, 256, 64],
+            swa=params.swa
+        )
 
 
 if __name__ == "__main__":
@@ -68,10 +79,16 @@ if __name__ == "__main__":
     parser.add_argument("--agent", help="Agent name",
                         type=str, default='ac2')
     parser.add_argument("-i", help="Model to load", type=str)
-    parser.add_argument("-o", help="Model to save to", type=str)            
+    parser.add_argument("-o", help="Model to save to", type=str)
     parser.add_argument("-v", help="Visualize pong game",
                         action="store_true", default=False)
+
+    parser.add_argument("--swa", help="Enable stochastic weights average",
+                        action="store_true", default=False)
     args = parser.parse_args()
+
+    # Setup numpy print options
+    np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
     env = get_env(args.env)
     params = get_params(
@@ -80,14 +97,14 @@ if __name__ == "__main__":
     try:
         agent.load(args.i)
     except:
+        print("########## Could no load model")
         pass
-    
 
-    # Setup numpy print options
-    np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
+
+
 
     score_history = []
-    episodes = 10000
+    episodes = 100000
     for i in range(episodes):
         score = 0
         done = False
@@ -101,12 +118,12 @@ if __name__ == "__main__":
             score += reward
             if params.verbose:
                 env.render()
-            if i % 10 == 0:
+            if (i + 1) % 10 == 0:
                 try:
                     agent.save(args.o)
                 except:
                     pass
-                
+
         score_history.append(score)
 
         agent.train()

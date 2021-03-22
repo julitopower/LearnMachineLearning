@@ -23,6 +23,8 @@ class PolicyGradientEngine(object):
         # model factory function must be defined in subclasses
         self.model = self.build_model()
 
+        self.epoch = 0
+
     def record(self, state, action, action_probs, reward):
         # one hot encode the action taken
         y = np.zeros([self.action_dim])
@@ -87,6 +89,38 @@ class PolicyGradientEngine(object):
         self.actions = []
         self.rewards = []
 
+        self.epoch += 1
+        swa_epoch = 10
+        if not self.swa:
+            if (self.epoch % swa_epoch) == 0:
+                # Copy weights to running model
+                for i, layer in enumerate(self.model.layers):
+                    print(layer.get_weights())
+            print(f"Loss is {loss}")
+            return
+
+        if (self.epoch % swa_epoch) == 0:
+            print(f"Averaging weights aftger {self.epoch} epochs")
+            if self.epoch <= swa_epoch:
+                # Copy weights to running model
+                for i, layer in enumerate(self.avg_model.layers):
+                    layer.set_weights(self.model.layers[i].get_weights())
+                    print(layer.get_weights())
+                return
+
+            # Update the average model
+            for i, layer in enumerate(self.avg_model.layers):
+                layer.set_weights(
+                    [(layer.get_weights()[j] * swa_epoch + self.model.layers[i].get_weights()[j]) / (float(swa_epoch) + 1.0) for j in range(len(layer.get_weights()))]
+                )
+
+            # Copy weights to running model
+            for i, layer in enumerate(self.model.layers):
+                layer.set_weights(self.avg_model.layers[i].get_weights())
+                print(layer.get_weights())
+            print(f"Loss is {loss}")
+
+
     def load(self, filepath):
       self.model.load_weights(filepath)
 
@@ -95,9 +129,17 @@ class PolicyGradientEngine(object):
 
 
 class DummyAgent(PolicyGradientEngine):
-    def __init__(self, state_dim, action_dim, gamma, lr, entropy_c, layers = [256, 1024, 2096, 4096, 256]):
+    def __init__(self,
+                 state_dim,
+                 action_dim,
+                 gamma,
+                 lr,
+                 entropy_c,
+                 layers = [256, 1024, 2096, 4096, 256],
+                 swa=False):
         self.layers = layers
         super().__init__(state_dim, action_dim, gamma, lr, entropy_c)
+        self.swa = swa
 
     def build_model(self):
         model = keras.Sequential()
@@ -105,10 +147,16 @@ class DummyAgent(PolicyGradientEngine):
 
         for layer in self.layers:
             model.add(keras.layers.Dense(layer, activation='relu', kernel_initializer='glorot_normal'))
-            #model.add(keras.layers.Dropout(rate=0.6))
+            # model.add(keras.layers.Dropout(rate=0.2))
 
         model.add(keras.layers.Dense(self.action_dim, activation='softmax'))
-        opt = keras.optimizers.Adam(lr=self.lr, clipnorm=0.5)
+
+        self.avg_model = keras.models.clone_model(model)
+        # Set average model weights to zero, so that SWA works
+        for i, layer in enumerate(self.avg_model.layers):
+            layer.set_weights([l*0.0 for l in layer.get_weights()])
+
+        opt = keras.optimizers.Adam(lr=self.lr, clipnorm=0.2)
         model.compile(optimizer=opt)
         model.summary()
         return model

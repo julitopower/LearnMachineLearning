@@ -9,7 +9,7 @@ class ActorCriticEngine(object):
 
     See: https://keras.io/examples/rl/actor_critic_cartpole/#implement-actor-critic-network
     """
-    def __init__(self, state_dim, action_dim, gamma=0.99, lr=0.0001, entropy_c=1e-4):
+    def __init__(self, state_dim, action_dim, gamma=0.99, lr=0.0001, lr2=0.0001, entropy_c=1e-4):
         self.state_dim = state_dim
         self.action_dim = action_dim
         # Reward discount factor
@@ -98,7 +98,7 @@ class ActorCriticEngine(object):
 
 
 class DummyAgent(ActorCriticEngine):
-    def __init__(self, state_dim, action_dim, gamma, lr, entropy_c,
+    def __init__(self, state_dim, action_dim, gamma, lr, lr2, entropy_c,
                  layers=[256, 1024, 2096, 4096, 256]):
         self.layers = layers
         super().__init__(state_dim, action_dim, gamma, lr, entropy_c)
