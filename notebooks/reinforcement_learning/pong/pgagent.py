@@ -22,7 +22,7 @@ class PolicyGradientEngine(object):
         self.action_probs = []
         # model factory function must be defined in subclasses
         self.model = self.build_model()
-
+        # Epoch counter
         self.epoch = 0
 
     def record(self, state, action, action_probs, reward):
@@ -77,12 +77,15 @@ class PolicyGradientEngine(object):
                 probs = self.model(state)
                 action_probs = tfp.distributions.Categorical(probs=probs)
                 log_prob = action_probs.log_prob(actions[idx])
-                entropy_loss = keras.losses.categorical_crossentropy(probs, probs)
+                entropy_loss = keras.losses.categorical_crossentropy(
+                    probs, probs)
                 # TODO: I am not sure about the sign of these term
                 # entropy_loss = 0
-                loss += (-r * tf.squeeze(log_prob) + self.entropy_c * entropy_loss)
+                loss += (-r * tf.squeeze(log_prob) +
+                         self.entropy_c * entropy_loss)
         gradient = tape.gradient(loss, self.model.trainable_variables)
-        self.model.optimizer.apply_gradients(zip(gradient, self.model.trainable_variables))
+        self.model.optimizer.apply_gradients(
+            zip(gradient, self.model.trainable_variables))
 
         self.states = []
         self.action_probs = []
@@ -90,15 +93,25 @@ class PolicyGradientEngine(object):
         self.rewards = []
 
         self.epoch += 1
+
+        # Check the health of the tensors. This will abort execution
+        # If nan/inf values are found
+        for i, layer in enumerate(self.model.layers):
+            [tf.debugging.check_numerics(t, "########### Weights are invalid")
+             for t in self.model.layers[i].get_weights()]
+
         swa_epoch = 10
         if not self.swa:
             if (self.epoch % swa_epoch) == 0:
-                # Copy weights to running model
+                # Print weights for the running model
                 for i, layer in enumerate(self.model.layers):
                     print(layer.get_weights())
             print(f"Loss is {loss}")
             return
 
+        # Perform SWA if enabled. This steps is currently very slow
+        # There must be a lot of copying going on, and this should be
+        # relatively easy to optimize
         if (self.epoch % swa_epoch) == 0:
             print(f"Averaging weights aftger {self.epoch} epochs")
             if self.epoch <= swa_epoch:
@@ -110,8 +123,11 @@ class PolicyGradientEngine(object):
 
             # Update the average model
             for i, layer in enumerate(self.avg_model.layers):
+                w = layer.get_weights()
+                mw = self.model.layers[i].get_weights()
                 layer.set_weights(
-                    [(layer.get_weights()[j] * swa_epoch + self.model.layers[i].get_weights()[j]) / (float(swa_epoch) + 1.0) for j in range(len(layer.get_weights()))]
+                    [(w[j] * swa_epoch + mw[j] / (float(swa_epoch) + 1.0))
+                     for j in range(len(w))]
                 )
 
             # Copy weights to running model
@@ -120,12 +136,11 @@ class PolicyGradientEngine(object):
                 print(layer.get_weights())
             print(f"Loss is {loss}")
 
-
     def load(self, filepath):
-      self.model.load_weights(filepath)
+        self.model.load_weights(filepath)
 
     def save(self, filepath):
-      self.model.save_weights(filepath)
+        self.model.save_weights(filepath)
 
 
 class DummyAgent(PolicyGradientEngine):
@@ -135,7 +150,7 @@ class DummyAgent(PolicyGradientEngine):
                  gamma,
                  lr,
                  entropy_c,
-                 layers = [256, 1024, 2096, 4096, 256],
+                 layers=[256, 1024, 2096, 4096, 256],
                  swa=False):
         self.layers = layers
         super().__init__(state_dim, action_dim, gamma, lr, entropy_c)
@@ -146,8 +161,9 @@ class DummyAgent(PolicyGradientEngine):
         model.add(keras.Input(shape=(self.state_dim,)))
 
         for layer in self.layers:
-            model.add(keras.layers.Dense(layer, activation='relu', kernel_initializer='glorot_normal'))
-            # model.add(keras.layers.Dropout(rate=0.2))
+            model.add(keras.layers.Dense(layer, activation='relu',
+                                         kernel_initializer='glorot_normal'))
+            model.add(keras.layers.Dropout(rate=0.5))
 
         model.add(keras.layers.Dense(self.action_dim, activation='softmax'))
 
