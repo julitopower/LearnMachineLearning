@@ -115,7 +115,7 @@ class PolicyGradientEngine(object):
         if (self.epoch % swa_epoch) == 0:
             print(f"Averaging weights aftger {self.epoch} epochs")
             if self.epoch <= swa_epoch:
-                # Copy weights to running model
+                # Copy weights from running model to average
                 for i, layer in enumerate(self.avg_model.layers):
                     layer.set_weights(self.model.layers[i].get_weights())
                     print(layer.get_weights())
@@ -126,7 +126,7 @@ class PolicyGradientEngine(object):
                 w = layer.get_weights()
                 mw = self.model.layers[i].get_weights()
                 layer.set_weights(
-                    [(w[j] * swa_epoch + mw[j] / (float(swa_epoch) + 1.0))
+                    [(w[j] * swa_epoch + mw[j]) / (float(swa_epoch) + 1.0)
                      for j in range(len(w))]
                 )
 
