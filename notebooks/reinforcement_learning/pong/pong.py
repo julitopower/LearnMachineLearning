@@ -55,7 +55,11 @@ class Pong():
         self.observation_space = Observation()
         self.action_space = Action()
 
+        self.steps = 0;
+
     def step(self, action):
+        if action != 2:
+            self.steps += 1
         self.lib.pong_step(self.game, action)
         return (self.state(), self.reward(), self.done(), None)
 
@@ -63,8 +67,11 @@ class Pong():
         self.lib.pong_delete(self.game)
 
     def reset(self):
+        self.steps = 0
         self.lib.pong_reset(self.game)
-        return self.state()
+        state = self.state()
+        self.starty = state[1]
+        return state
 
     def state(self):
         st = list(self.lib.pong_state(self.game).contents)
@@ -72,22 +79,17 @@ class Pong():
 
     def reward(self):
         r = self.lib.pong_reward(self.game)
-        st = self.state()
 
+        # Measures ideal number of movements vr actual movements
+        # We want to reward quickly going to the right final
+        # location for the racket
+        steps_penalty = (self.starty - self.steps)
         if r > 0:
-            return 100
+            return 100 + steps_penalty
         elif r < 0:
-            return r
+            return r + steps_penalty
         else:
             return 0
-            return -abs(st[5] - st[1]) / ( 1 + st[0])
-
-
-        if r > 0:
-            return 1
-        elif r < 0:
-            return -1
-        return -abs(st[5] - st[1]) / ((1 + st[0]) * 1000)
 
     def done(self):
         return self.lib.pong_done(self.game)
