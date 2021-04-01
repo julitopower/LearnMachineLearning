@@ -70,7 +70,9 @@ class Pong():
         self.steps = 0
         self.lib.pong_reset(self.game)
         state = self.state()
-        self.starty = state[1]
+        # State[bx, by, bvx, bvy, rx, ry, vrx, vry]
+        # this is racket start y coordinate
+        self.starty = state[5]
         return state
 
     def state(self):
@@ -83,7 +85,8 @@ class Pong():
         # Measures ideal number of movements vr actual movements
         # We want to reward quickly going to the right final
         # location for the racket
-        steps_penalty = (self.starty - self.steps)
+        bally = self.state()[1]
+        steps_penalty = (abs(self.starty - bally) -  self.steps)
         if r > 0:
             return 100 + steps_penalty
         elif r < 0:
