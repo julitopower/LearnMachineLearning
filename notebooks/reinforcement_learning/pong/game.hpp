@@ -256,28 +256,18 @@ void pong_step(PongHdlr pong, int action) {
   }
 }
 
-const double *pong_state(PongHdlr pong) {
-  auto &game = *static_cast<Game *>(pong);
-  return game.state().data();
-}
+#define GAME_CAST(variable) auto &variable = *static_cast<Game *>(pong)
 
-void pong_reset(PongHdlr pong) {
-  auto &game = *static_cast<Game *>(pong);
-  game.reset();
-}
+#define GEN_C_BINDING(name, fn)                 \
+  void pong_##name(PongHdlr pong) {             \
+      GAME_CAST(game);                          \
+      game.fn();                                \
+  }
 
-double pong_reward(PongHdlr pong) {
-  auto &game = *static_cast<Game *>(pong);
-  return game.reward();
-}
+GEN_C_BINDING(reset, reset);
+GEN_C_BINDING(done,done);
+GEN_C_BINDING(render,render);
+GEN_C_BINDING(reward, reward);
+GEN_C_BINDING(state, state().data);
 
-int pong_done(PongHdlr pong) {
-  auto &game = *static_cast<Game *>(pong);
-  return game.done();
-}
-
-void pong_render(PongHdlr pong) {
-  auto &game = *static_cast<Game *>(pong);
-  game.render();
-}
 }
