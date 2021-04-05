@@ -264,10 +264,16 @@ void pong_step(PongHdlr pong, int action) {
       game.fn();                                \
   }
 
+#define GEN_C_BINDING_RET(name, fn, ret)            \
+  ret pong_##name(PongHdlr pong) {             \
+      GAME_CAST(game);                          \
+      return game.fn();                                \
+  }  
+
 GEN_C_BINDING(reset, reset);
-GEN_C_BINDING(done,done);
+GEN_C_BINDING_RET(done,done, int);
 GEN_C_BINDING(render,render);
-GEN_C_BINDING(reward, reward);
-GEN_C_BINDING(state, state().data);
+GEN_C_BINDING_RET(reward, reward, double);
+GEN_C_BINDING_RET(state, state().data, const double*);
 
 }
