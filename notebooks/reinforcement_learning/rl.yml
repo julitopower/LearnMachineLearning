@@ -24,5 +24,6 @@ dependencies:
     - seaborn    
   - python-language-server
   - python=3.8
-  - pytorch
+  - pytorch-gpu
+  - torchvision
   - sdl2
