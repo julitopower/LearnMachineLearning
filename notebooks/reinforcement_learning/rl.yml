@@ -10,6 +10,7 @@ dependencies:
   - gtest=1.10.0  
   - gxx_linux-64
   - gym=0.18.0
+  - imageio
   - libclang
   - make
   - notebook
@@ -21,7 +22,9 @@ dependencies:
     - tensorflow_probability
     - sklearn
     - matplotlib
-    - seaborn    
+    - seaborn
+    - open3d
+    - open3d-admin
   - python-language-server
   - python=3.8
   - pytorch-gpu
